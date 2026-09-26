@@ -1,174 +1,38 @@
 import SwiftUI
 
-enum AppSection: String, CaseIterable, Identifiable {
-    case overview, ask, materials, damageMechanisms, components, standards, library, settings
-    var id: Self { self }
-    var title: String {
-        switch self { case .overview: "Overview"; case .ask: "Ask"; case .materials: "Materials"; case .damageMechanisms: "Damage Mechanisms"; case .components: "Components"; case .standards: "Standards"; case .library: "Library"; case .settings: "Settings" }
-    }
-    var symbol: String {
-        switch self { case .overview: "rectangle.3.group"; case .ask: "bubble.left.and.text.bubble.right"; case .materials: "square.stack.3d.up"; case .damageMechanisms: "exclamationmark.shield"; case .components: "shippingbox"; case .standards: "checkmark.seal"; case .library: "books.vertical"; case .settings: "gearshape" }
-    }
+enum AppSection: String, CaseIterable, Identifiable { case overview, materials, mechanisms, standards, components, sources, claims, relationships
+ var id: Self { self }; var title: String { switch self { case .overview:"Overview"; case .materials:"Materials"; case .mechanisms:"Damage Mechanisms"; case .standards:"Standards"; case .components:"Components"; case .sources:"Sources"; case .claims:"Claims"; case .relationships:"Relationships" } }
+ var kind: RecordKind? { switch self { case .materials:.material; case .mechanisms:.mechanism; case .standards:.standard; case .components:.component; case .sources:.source; default:nil } }
 }
 
-struct RootView: View {
-    @State private var selection: AppSection? = .overview
-    @State private var store: KnowledgeStore?
-    @State private var loadError: String?
-    var body: some View {
-        NavigationSplitView {
-            Sidebar(selection: $selection)
-        } detail: {
-            if let selection { SectionPage(section: selection, store: store, loadError: loadError) } else { ContentUnavailableView("Select a section", systemImage: "sidebar.left") }
-        }
-        .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)
-        .frame(minWidth: 900, minHeight: 560)
-        .task {
-            do { let opened = try KnowledgeStore(url: KnowledgeStore.applicationURL()); try opened.seedIfEmpty(); store = opened }
-            catch { loadError = error.localizedDescription }
-        }
-    }
+struct RootView: View { @State private var selection: AppSection? = .overview; @State private var store: KnowledgeStore?; @State private var error: String?; @State private var refresh = UUID()
+ var body: some View { NavigationSplitView { List(AppSection.allCases, selection: $selection) { Label($0.title, systemImage: "circle").tag(Optional($0)) }.navigationTitle("Materials Intelligence").listStyle(.sidebar) } detail: { if let selection { Page(section: selection, store: store, refresh: $refresh, error: error) } }.frame(minWidth: 980, minHeight: 640).task { do { let s = try KnowledgeStore(url: try KnowledgeStore.applicationURL()); try s.seedIfEmpty(); store=s } catch let caught { error=caught.localizedDescription } } }
 }
 
-private extension AppSection {
-    var recordKind: RecordKind? {
-        switch self { case .materials: .material; case .damageMechanisms: .mechanism; case .standards: .standard; case .components: .component; case .library: .source; default: nil }
-    }
+private struct Page: View { let section: AppSection; let store: KnowledgeStore?; @Binding var refresh: UUID; let error: String?
+ var body: some View { Group { if let error { ContentUnavailableView("Database unavailable", systemImage:"externaldrive.badge.exclamationmark", description:Text(error)) } else if let store { if let kind=section.kind { RecordPage(kind:kind, store:store, refresh:$refresh) } else if section == .claims { ClaimsPage(store:store, refresh:$refresh) } else if section == .relationships { RelationshipsPage(store:store, refresh:$refresh) } else { Overview(store:store) } } else { ProgressView("Opening local knowledge") } }.toolbar { Button("Refresh", systemImage:"arrow.clockwise") { refresh=UUID() } } }
 }
 
-private struct Sidebar: View {
-    @Binding var selection: AppSection?
-    var body: some View {
-        List(selection: $selection) {
-            Section("Workspace") {
-                ForEach(AppSection.allCases.filter { $0 != .settings }) { section in
-                    Label(section.title, systemImage: section.symbol).tag(Optional(section))
-                }
-            }
-            Section { Label(AppSection.settings.title, systemImage: AppSection.settings.symbol).tag(Optional(AppSection.settings)) }
-        }
-        .listStyle(.sidebar)
-        .navigationTitle("Materials Intelligence")
-        .safeAreaInset(edge: .bottom) {
-            HStack(spacing: 8) { Image(systemName: "lock.shield").foregroundStyle(.secondary); Text("Local workspace").font(.caption).foregroundStyle(.secondary); Spacer() }.padding(.horizontal, 12).padding(.vertical, 10)
-        }
-    }
+private struct Overview: View { let store: KnowledgeStore; var body: some View { VStack(alignment:.leading,spacing:18) { Text("Knowledge workspace").font(.largeTitle.bold()); Text("Create structured records, preserve source traceability, and review claims locally.").foregroundStyle(.secondary); ForEach(RecordKind.allCases,id:\.self) { k in LabeledContent(k.rawValue.capitalized,value:"\((try? store.records(kind:k).count) ?? 0)") }; Text("Sample records are illustrative and unverified.").font(.caption).foregroundStyle(.secondary) }.frame(maxWidth:700,alignment:.leading).padding(32) } }
+
+private struct RecordPage: View { let kind:RecordKind; let store:KnowledgeStore; @Binding var refresh:UUID; @State private var selected:KnowledgeRecord?; @State private var editor:KnowledgeRecord?; @State private var adding=false; @State private var alert=""; var records:[KnowledgeRecord] {(try? store.records(kind:kind)) ?? []}
+ var body: some View { HStack(spacing:0) { List(records,selection:$selected) { r in VStack(alignment:.leading){Text(r.name);Text(r.secondary).font(.caption).foregroundStyle(.secondary)}.tag(r) }.frame(width:300);Divider(); if let selected { RecordDetail(record:selected,store:store,edit:{editor=selected},delete:delete) } else { ContentUnavailableView("Select a record",systemImage:"doc.text") } }.navigationTitle(kind.rawValue.capitalized).toolbar { Button("Add",systemImage:"plus"){adding=true} }.sheet(isPresented:$adding){RecordEditor(kind:kind,store:store,done:{refresh=UUID()})}.sheet(item:$editor){RecordEditor(record:$0,store:store,done:{refresh=UUID()})}.alert("Cannot delete record",isPresented:Binding(get:{!alert.isEmpty},set:{if !$0{alert=""}})){Button("OK"){} } message:{Text(alert)} }
+ func delete(){guard let selected else{return};do{try store.deleteRecord(id:selected.id);self.selected=nil;refresh=UUID()}catch{alert="This record is referenced by a claim or relationship. Remove those references first; knowledge is never silently destroyed."}}
+}
+private struct RecordDetail: View { let record:KnowledgeRecord;let store:KnowledgeStore;let edit:()->Void;let delete:()->Void; var body:some View{ScrollView{VStack(alignment:.leading,spacing:16){HStack{Text(record.name).font(.largeTitle.bold());Spacer();Button("Edit",action:edit);Button("Delete",role:.destructive,action:delete)};Text(record.secondary).font(.headline);Text(record.detail.isEmpty ? "No detail recorded.":record.detail);Divider();Text("Claims").font(.title2.bold());ForEach((try? store.claims(subjectID:record.id)) ?? []){Text("\($0.status.title): \($0.statement)")};Text("Relationships").font(.title2.bold());ForEach((try? store.relationships(recordID:record.id)) ?? []){let id=$0.fromID==record.id ? $0.toID:$0.fromID;Text("\($0.predicate.replacingOccurrences(of:"_",with:" ")) → \((try? store.record(id:id))?.name ?? "Unknown")")}}.frame(maxWidth:.infinity,alignment:.leading).padding(28)}}}
+private struct RecordEditor: View { @Environment(\.dismiss)var dismiss;let record:KnowledgeRecord?;let kind:RecordKind;let store:KnowledgeStore;let done:()->Void;@State var name="";@State var detail="";@State var secondary="";@State var error="";init(record:KnowledgeRecord?=nil,kind:RecordKind?=nil,store:KnowledgeStore,done:@escaping()->Void){self.record=record;self.kind=record?.kind ?? kind!;self.store=store;self.done=done;_name=State(initialValue:record?.name ?? "");_detail=State(initialValue:record?.detail ?? "");_secondary=State(initialValue:record?.secondary ?? "")}
+ var body:some View{Form{TextField("Name",text:$name);TextField("Designation / revision",text:$secondary);TextField("Detail",text:$detail,axis:.vertical);Text(error).foregroundStyle(.red)}.padding().frame(width:460).toolbar{ToolbarItem(placement:.cancellationAction){Button("Cancel"){dismiss()}};ToolbarItem(placement:.confirmationAction){Button("Save"){save()}.disabled(name.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)}}}
+ func save(){do{try store.save(KnowledgeRecord(id:record?.id ?? UUID().uuidString,kind:kind,name:name.trimmingCharacters(in:.whitespacesAndNewlines),detail:detail,secondary:secondary));done();dismiss()}catch let caught{error=caught.localizedDescription}}
 }
 
-private struct SectionPage: View {
-    let section: AppSection
-    let store: KnowledgeStore?
-    let loadError: String?
-    var body: some View {
-        Group { if section == .overview { OverviewPage() } else if let kind = section.recordKind { KnowledgePage(kind: kind, store: store, loadError: loadError) } else if section == .settings { SettingsPage() } else { EmptySectionPage(section: section) } }
-            .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    Button("Refresh", systemImage: "arrow.clockwise") {}.help("Refresh this view")
-                    Button("Add", systemImage: "plus") {}.help("Add an item when this section is available")
-                }
-            }
-            .searchable(text: .constant(""), placement: .toolbar, prompt: "Search workspace")
-    }
+private struct ClaimsPage: View { let store: KnowledgeStore; @Binding var refresh: UUID; @State private var selected: EngineeringClaim?; @State private var adding=false
+ var claims:[EngineeringClaim] {(try? store.claims()) ?? []}; var body:some View { VStack(alignment:.leading){List(claims,selection:$selected){c in VStack(alignment:.leading){Text(c.statement);Text("\(c.status.title) · \((try? store.record(id:c.sourceID))?.name ?? "Unknown source")").font(.caption).foregroundStyle(.secondary)}.tag(c)} }.navigationTitle("Engineering Claims").toolbar{Button("Add",systemImage:"plus"){adding=true}}.sheet(isPresented:$adding){ClaimEditor(store:store,done:{refresh=UUID()})} }
 }
-
-private struct OverviewPage: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DesignMetrics.sectionSpacing) {
-                PageHeading(title: "Overview", subtitle: "Your local engineering workspace")
-                HStack(alignment: .top, spacing: DesignMetrics.cardSpacing) {
-                    SummaryCard(title: "Materials", value: "—", symbol: "square.stack.3d.up", tint: .blue)
-                    SummaryCard(title: "Library", value: "—", symbol: "books.vertical", tint: .purple)
-                    SummaryCard(title: "Open work", value: "—", symbol: "checklist", tint: .orange)
-                }
-                EmptyStatePanel(title: "Your workspace is ready", message: "Materials Intelligence is set up for local engineering knowledge. Add content in a later phase to begin building your library.", symbol: "sparkles")
-            }.padding(DesignMetrics.pagePadding)
-        }.navigationTitle("Overview")
-    }
+private struct ClaimEditor: View { @Environment(\.dismiss)var dismiss; let store:KnowledgeStore; let done:()->Void; @State var subject="";@State var statement="";@State var predicate="";@State var source="";@State var locator="";@State var status:VerificationStatus = .draft;@State var error=""; var body:some View{Form{Picker("Subject",selection:$subject){ForEach((try? store.records()) ?? []){Text($0.name).tag($0.id)}};Picker("Source",selection:$source){ForEach((try? store.records(kind:.source)) ?? []){Text($0.name).tag($0.id)}};TextField("Predicate",text:$predicate);TextField("Statement",text:$statement,axis:.vertical);TextField("Page / section",text:$locator);Picker("Review state",selection:$status){ForEach(VerificationStatus.allCases,id:\.self){Text($0.title).tag($0)}};Text(error).foregroundStyle(.red)}.padding().frame(width:520).toolbar{ToolbarItem(placement:.cancellationAction){Button("Cancel"){dismiss()}};ToolbarItem(placement:.confirmationAction){Button("Save"){save()}.disabled(subject.isEmpty||source.isEmpty||statement.isEmpty)}}}
+ func save(){do{try store.save(EngineeringClaim(subjectID:subject,predicate:predicate,statement:statement,sourceID:source,locator:locator,status:status));done();dismiss()}catch let caught{error=caught.localizedDescription}}
 }
-
-private struct EmptySectionPage: View {
-    let section: AppSection
-    var body: some View { EmptyStatePanel(title: section.title, message: "This workspace is ready for future engineering content.", symbol: section.symbol).padding(DesignMetrics.pagePadding).navigationTitle(section.title) }
+private struct RelationshipsPage: View { let store:KnowledgeStore; @Binding var refresh: UUID; @State var adding=false; var body:some View{List((try? store.relationships()) ?? []){r in let f=(try? store.record(id:r.fromID))?.name ?? "?";let t=(try? store.record(id:r.toID))?.name ?? "?";Text("\(f)  —  \(r.predicate.replacingOccurrences(of:"_",with:" "))  —  \(t)")}.navigationTitle("Relationships").toolbar{Button("Add",systemImage:"plus"){adding=true}}.sheet(isPresented:$adding){RelationshipEditor(store:store,done:{refresh=UUID()})}}
 }
-
-private struct SettingsPage: View {
-    var body: some View {
-        Form {
-            Section("Workspace") { LabeledContent("Storage", value: "Local"); LabeledContent("Appearance", value: "System") }
-            Section("About") { LabeledContent("Application", value: "Materials Intelligence"); LabeledContent("Version", value: "1.0") }
-        }.formStyle(.grouped).padding(DesignMetrics.pagePadding).frame(maxWidth: 680, alignment: .leading).navigationTitle("Settings")
-    }
-}
-
-private struct PageHeading: View {
-    let title: String; let subtitle: String
-    var body: some View { VStack(alignment: .leading, spacing: 6) { Text(title).font(.largeTitle.bold()); Text(subtitle).foregroundStyle(.secondary) } }
-}
-
-private struct SummaryCard: View {
-    let title: String; let value: String; let symbol: String; let tint: Color
-    var body: some View { VStack(alignment: .leading, spacing: 14) { Image(systemName: symbol).font(.title2).foregroundStyle(tint); Text(value).font(.title.bold()); Text(title).font(.subheadline).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading).padding(18).background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 10)) }
-}
-
-private struct EmptyStatePanel: View {
-    let title: String; let message: String; let symbol: String
-    var body: some View { ContentUnavailableView { Label(title, systemImage: symbol) } description: { Text(message) }.frame(maxWidth: .infinity, minHeight: 230).background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 12)) }
-}
-
-private enum DesignMetrics { static let pagePadding: CGFloat = 28; static let cardSpacing: CGFloat = 14; static let sectionSpacing: CGFloat = 28 }
-
-
-private struct KnowledgePage: View {
-    let kind: RecordKind
-    let store: KnowledgeStore?
-    let loadError: String?
-    @State private var selectedID: String?
-    private var records: [KnowledgeRecord] { (try? store?.records(kind: kind)) ?? [] }
-    var body: some View {
-        if let loadError { ContentUnavailableView("Database unavailable", systemImage: "externaldrive.badge.exclamationmark", description: Text(loadError)) }
-        else if store == nil { ProgressView("Opening local knowledge") }
-        else {
-            HStack(spacing: 0) {
-                List(records, selection: $selectedID) { record in
-                    VStack(alignment: .leading) { Text(record.name); if !record.secondary.isEmpty { Text(record.secondary).font(.caption).foregroundStyle(.secondary) } }.tag(record.id)
-                }.frame(minWidth: 250, idealWidth: 300)
-                Divider()
-                if let selectedID, let record = try? store?.record(id: selectedID) { KnowledgeDetail(record: record, store: store!) }
-                else { ContentUnavailableView("Select a record", systemImage: "doc.text") }
-            }
-        }
-    }
-}
-
-private struct KnowledgeDetail: View {
-    let record: KnowledgeRecord
-    let store: KnowledgeStore
-    var body: some View {
-        let claims = (try? store.claims(subjectID: record.id)) ?? []
-        let relationships = (try? store.relationships(recordID: record.id)) ?? []
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Text(record.name).font(.largeTitle.bold())
-                Text(record.detail).foregroundStyle(.secondary)
-                if !record.secondary.isEmpty { Text(record.secondary) }
-                if !relationships.isEmpty {
-                    Text("Relationships").font(.title2.bold())
-                    ForEach(relationships) { link in
-                        let otherID = link.fromID == record.id ? link.toID : link.fromID
-                        if let other = try? store.record(id: otherID) { LabeledContent(link.predicate.replacingOccurrences(of: "_", with: " "), value: other.name) }
-                    }
-                }
-                if !claims.isEmpty {
-                    Text("Engineering claims").font(.title2.bold())
-                    ForEach(claims) { claim in
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(claim.statement)
-                            Text("\(claim.status.rawValue.capitalized) · Source: \((try? store.record(id: claim.sourceID))?.name ?? "Unknown")\(claim.locator.isEmpty ? "" : " · \(claim.locator)")").font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(28)
-        }
-    }
+private struct RelationshipEditor: View { @Environment(\.dismiss)var dismiss;let store:KnowledgeStore;let done:()->Void;@State var from="";@State var to="";@State var predicate="related_to";@State var error="";var body:some View{Form{Picker("From",selection:$from){ForEach((try? store.records()) ?? []){Text($0.name).tag($0.id)}};TextField("Relationship",text:$predicate);Picker("To",selection:$to){ForEach((try? store.records()) ?? []){Text($0.name).tag($0.id)}};Text(error).foregroundStyle(.red)}.padding().frame(width:430).toolbar{ToolbarItem(placement:.cancellationAction){Button("Cancel"){dismiss()}};ToolbarItem(placement:.confirmationAction){Button("Save"){save()}.disabled(from.isEmpty||to.isEmpty||from==to)}}}
+ func save(){do{try store.save(KnowledgeRelationship(fromID:from,predicate:predicate,toID:to));done();dismiss()}catch let caught{error=caught.localizedDescription}}
 }

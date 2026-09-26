@@ -27,3 +27,7 @@ Store engineering claims separately from UI prose and future AI output. Every cl
 ## 2026-09-27 — SQLite versioning and local repository
 
 Use system SQLite through a small Swift repository, with `PRAGMA user_version` and transactional numbered migrations. This keeps the app offline and avoids third-party dependencies. Reject databases newer than the running app. Future migrations must preserve stable IDs and source links and include upgrade tests.
+
+## 2026-09-27 — Phase 3 lifecycle and safe deletion
+
+Use explicit claim states and keep record deletion restricted by SQLite foreign keys. Claims may be archived; records with live evidence or relationships remain until those references are intentionally removed. This is the smallest safe lifecycle compatible with the Phase 2 schema.

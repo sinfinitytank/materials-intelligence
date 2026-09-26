@@ -55,12 +55,12 @@ final class KnowledgeStore {
     }
     private func migrate() throws {
         let version = try schemaVersion()
-        guard version <= 1 else { throw KnowledgeStoreError(message: "Database schema is newer than this app") }
+        guard version <= 2 else { throw KnowledgeStoreError(message: "Database schema is newer than this app") }
         if version == 0 {
             try execute("BEGIN IMMEDIATE")
             do {
                 try execute("CREATE TABLE records (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('material','mechanism','standard','component','source')), name TEXT NOT NULL COLLATE NOCASE, detail TEXT NOT NULL DEFAULT '', secondary TEXT NOT NULL DEFAULT '', UNIQUE(kind, name))")
-                try execute("CREATE TABLE claims (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL REFERENCES records(id) ON DELETE RESTRICT, predicate TEXT NOT NULL, statement TEXT NOT NULL, conditions TEXT NOT NULL DEFAULT '', source_id TEXT NOT NULL REFERENCES records(id) ON DELETE RESTRICT, locator TEXT NOT NULL DEFAULT '', status TEXT NOT NULL CHECK(status IN ('unverified','reviewed','verified')), evidence_level TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, modified_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)")
+                try execute("CREATE TABLE claims (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL REFERENCES records(id) ON DELETE RESTRICT, predicate TEXT NOT NULL, statement TEXT NOT NULL, conditions TEXT NOT NULL DEFAULT '', source_id TEXT NOT NULL REFERENCES records(id) ON DELETE RESTRICT, locator TEXT NOT NULL DEFAULT '', status TEXT NOT NULL CHECK(status IN ('draft','unverified','reviewed','verified','superseded','archived')), evidence_level TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, modified_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)")
                 try execute("CREATE TABLE relationships (id TEXT PRIMARY KEY, from_id TEXT NOT NULL REFERENCES records(id) ON DELETE RESTRICT, predicate TEXT NOT NULL, to_id TEXT NOT NULL REFERENCES records(id) ON DELETE RESTRICT, supporting_claim_id TEXT REFERENCES claims(id) ON DELETE RESTRICT, CHECK(from_id <> to_id), UNIQUE(from_id, predicate, to_id))")
                 try execute("CREATE INDEX claims_subject_idx ON claims(subject_id)")
                 try execute("CREATE INDEX claims_source_idx ON claims(source_id)")
@@ -69,7 +69,23 @@ final class KnowledgeStore {
                 try execute("CREATE TRIGGER claims_source_kind_insert BEFORE INSERT ON claims WHEN (SELECT kind FROM records WHERE id = NEW.source_id) != 'source' BEGIN SELECT RAISE(ABORT, 'claim source must be a source record'); END")
                 try execute("CREATE TRIGGER claims_source_kind_update BEFORE UPDATE OF source_id ON claims WHEN (SELECT kind FROM records WHERE id = NEW.source_id) != 'source' BEGIN SELECT RAISE(ABORT, 'claim source must be a source record'); END")
                 try execute("CREATE TRIGGER claims_modified AFTER UPDATE ON claims BEGIN UPDATE claims SET modified_at = CURRENT_TIMESTAMP WHERE id = NEW.id; END")
-                try execute("PRAGMA user_version = 1")
+                try execute("PRAGMA user_version = 2")
+                try execute("COMMIT")
+            } catch { try? execute("ROLLBACK"); throw error }
+        }
+        if version == 1 {
+            try execute("BEGIN IMMEDIATE")
+            do {
+                try execute("CREATE TABLE claims_v2 (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL REFERENCES records(id) ON DELETE RESTRICT, predicate TEXT NOT NULL, statement TEXT NOT NULL, conditions TEXT NOT NULL DEFAULT '', source_id TEXT NOT NULL REFERENCES records(id) ON DELETE RESTRICT, locator TEXT NOT NULL DEFAULT '', status TEXT NOT NULL CHECK(status IN ('draft','unverified','reviewed','verified','superseded','archived')), evidence_level TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, modified_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)")
+                try execute("INSERT INTO claims_v2 SELECT * FROM claims")
+                try execute("DROP TABLE claims")
+                try execute("ALTER TABLE claims_v2 RENAME TO claims")
+                try execute("CREATE INDEX claims_subject_idx ON claims(subject_id)")
+                try execute("CREATE INDEX claims_source_idx ON claims(source_id)")
+                try execute("CREATE TRIGGER claims_source_kind_insert BEFORE INSERT ON claims WHEN (SELECT kind FROM records WHERE id = NEW.source_id) != 'source' BEGIN SELECT RAISE(ABORT, 'claim source must be a source record'); END")
+                try execute("CREATE TRIGGER claims_source_kind_update BEFORE UPDATE OF source_id ON claims WHEN (SELECT kind FROM records WHERE id = NEW.source_id) != 'source' BEGIN SELECT RAISE(ABORT, 'claim source must be a source record'); END")
+                try execute("CREATE TRIGGER claims_modified AFTER UPDATE ON claims BEGIN UPDATE claims SET modified_at = CURRENT_TIMESTAMP WHERE id = NEW.id; END")
+                try execute("PRAGMA user_version = 2")
                 try execute("COMMIT")
             } catch { try? execute("ROLLBACK"); throw error }
         }
@@ -91,12 +107,13 @@ final class KnowledgeStore {
     }
     func claims(subjectID: String? = nil) throws -> [EngineeringClaim] {
         var rows: [EngineeringClaim] = []
-        try query("SELECT id,subject_id,predicate,statement,conditions,source_id,locator,status,evidence_level,notes FROM claims WHERE (? IS NULL OR subject_id=?) ORDER BY id", [subjectID,subjectID]) { s in
+        try query("SELECT id,subject_id,predicate,statement,conditions,source_id,locator,status,evidence_level,notes FROM claims WHERE (? IS NULL OR subject_id=?) ORDER BY modified_at DESC", [subjectID,subjectID]) { s in
             rows.append(EngineeringClaim(id: text(s,0), subjectID: text(s,1), predicate: text(s,2), statement: text(s,3), conditions: text(s,4), sourceID: text(s,5), locator: text(s,6), status: VerificationStatus(rawValue: text(s,7)) ?? .unverified, evidenceLevel: text(s,8), notes: text(s,9)))
         }
         return rows
     }
     func deleteClaim(id: String) throws { try execute("DELETE FROM claims WHERE id=?", [id]) }
+    func claim(id: String) throws -> EngineeringClaim? { try claims().first { $0.id == id } }
     func save(_ relationship: KnowledgeRelationship) throws {
         try execute("INSERT INTO relationships(id,from_id,predicate,to_id,supporting_claim_id) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET from_id=excluded.from_id,predicate=excluded.predicate,to_id=excluded.to_id,supporting_claim_id=excluded.supporting_claim_id", [relationship.id,relationship.fromID,relationship.predicate,relationship.toID,relationship.supportingClaimID])
     }

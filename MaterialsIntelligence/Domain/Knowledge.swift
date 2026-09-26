@@ -1,7 +1,7 @@
 import Foundation
 
 enum RecordKind: String, CaseIterable, Sendable { case material, mechanism, standard, component, source }
-struct KnowledgeRecord: Identifiable, Equatable, Sendable {
+struct KnowledgeRecord: Identifiable, Equatable, Hashable, Sendable {
     let id: String
     let kind: RecordKind
     var name: String
@@ -11,8 +11,10 @@ struct KnowledgeRecord: Identifiable, Equatable, Sendable {
         self.id = id; self.kind = kind; self.name = name; self.detail = detail; self.secondary = secondary
     }
 }
-enum VerificationStatus: String, Sendable { case unverified, reviewed, verified }
-struct EngineeringClaim: Identifiable, Equatable, Sendable {
+enum VerificationStatus: String, CaseIterable, Sendable { case draft, unverified, reviewed, verified, superseded, archived
+    var title: String { rawValue.capitalized }
+}
+struct EngineeringClaim: Identifiable, Equatable, Hashable, Sendable {
     let id: String
     var subjectID: String
     var predicate: String
