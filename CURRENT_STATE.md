@@ -2,15 +2,16 @@
 
 ## Scope and build
 
-Phases 0–4 are implemented in a native SwiftUI macOS 15+ app. The sole Xcode target is `MaterialsIntelligence`; it uses system SQLite/FTS5 and AppKit file panels, with no web runtime, third-party dependency, AI, embeddings, document extraction, network service, or Phase 5 implementation. Xcode 27.0 / Swift 6.4 Release arm64 build and standalone repository tests passed on 2026-09-27. A five-second process launch of the Release app stayed alive without an initialization failure. The presentation layer now includes a reference-led native shell with grouped sidebar navigation, local database status, balanced window sizing, overview metric panels, shared page headers/panel primitives, and a cool neutral canvas/material treatment. Visual navigation, resizing, appearance, and full document open interaction still require human checks.
+Phases 0–4 are implemented in a native SwiftUI macOS 15+ app. The sole Xcode target is `MaterialsIntelligence`; it uses system SQLite/FTS5 and AppKit file panels, with no web runtime, third-party dependency, embeddings, document extraction, or network service. Phase 5 adds a guarded Apple on-device model provider and local RAG pipeline. Xcode 27.0 / Swift 6.4 Release arm64 build and standalone repository tests passed on 2026-09-27. A five-second process launch of the Release app stayed alive without an initialization failure. The presentation layer now includes a reference-led native shell with grouped sidebar navigation, local database status, balanced window sizing, overview metric panels, shared page headers/panel primitives, and a cool neutral canvas/material treatment. Visual navigation, resizing, appearance, and full document open interaction still require human checks.
 
 ## Structure and data
 
 - `App`: SwiftUI entry point and local database startup.
-- `UI`: `NavigationSplitView`, native record/claim/relationship authoring, Search, Library, Ask placeholder, Settings.
+- `UI`: `NavigationSplitView`, native record/claim/relationship authoring, Search, Library, local Ask, Settings.
 - `Domain`: stable-ID value models for records, claims, relationships, search results, and documents.
 - `Database`: SQLite connection, numbered migrations, foreign keys, repository methods, and local FTS5.
-- `MaterialsIntelligenceTests`: directly compiled repository regression executable; there is no Xcode test target.
+- `AI`: existing-FTS retrieval, bounded context, citation validation, and on-device Apple provider.
+- `MaterialsIntelligenceTests`: directly compiled repository and RAG regression executables; there is no Xcode test target.
 
 The local file is `Application Support/MaterialsIntelligence/knowledge.sqlite`. Current schema version is 3. A version 1 database upgrades by copying claims and their dependent relationships into replacement tables in one transaction with foreign keys enabled, then advances through the version 3 document/search migration. The upgrade is tested with the original version 1 DDL, source, claim, and a relationship citing that claim, followed by reopening and `foreign_key_check`.
 
@@ -28,8 +29,12 @@ The current native UI follows the repository reference images as closely as the 
 
 The regression executable covers fresh initialization, exact/prefix/multiple-term search, the `725 hydrogen H2S` query, arbitrary punctuation, reindex on update/delete/archive, foreign keys, claim lifecycle persistence, relationship restriction/removal, document associations, transactional rollback, real bookmark creation/resolution after database reopen, and moved-file metadata retention. Actual GUI file selection, opening through `NSWorkspace`, sandbox permission behavior across a real app restart, stale bookmark refresh, window resizing, dark/light rendering, and keyboard/accessibility use are **UNVERIFIED** pending manual inspection.
 
-The seed data is illustrative and unverified engineering knowledge. Phase 5 remains unstarted.
+The seed data is illustrative and unverified engineering knowledge. Phase 5 code is implemented; real-model and visual GUI verification remain outstanding.
 
 ## Exact next action
 
-Run the short manual GUI checks in `MILESTONE.md`. If they pass, Phases 0–4 have no known implementation defect blocking a separately authorized Phase 5.
+On an eligible Mac with the on-device Apple model ready, store a genuine Reviewed or Verified Alloy 725 claim with source and locator; ask the representative question offline; inspect the answer, claim/source navigation, and Ask layout. Also run the outstanding Phase 0–4 GUI checks in `MILESTONE.md`.
+
+## Phase 5 verification — 2026-09-27
+
+Debug and Release arm64 app builds, existing `KnowledgeStoreTests`, and deterministic `LocalRAGTests` pass. The RAG tests cover a known fixture answer, no evidence, unverified evidence, claim/source ID mapping, invalid citations, unavailable model handling, context limits, and stored instruction strings. The app launched as a process. On this Mac, `SystemLanguageModel.default.availability` returned `modelNotReady`, so actual local-model generation is **UNVERIFIED**. `screencapture` returned “could not create image from display” and System Events denied assistive access, so Ask visual and interactive inspection is **UNVERIFIED**. A disconnected-network GUI run is **UNVERIFIED**; the implementation contains no network path or cloud fallback. Claim-ID validation does not prove semantic faithfulness of model prose; a reviewer must check the answer against opened claims and sources.

@@ -1,6 +1,6 @@
 # Architecture
 
-Materials Intelligence is a native SwiftUI macOS 15+ application with one Xcode app target and no third-party runtime. `App` opens the local database, `UI` reads and writes through `KnowledgeStore`, `Domain` holds value models, and `Database` owns SQLite statements and migration. A future iOS/iPadOS client could reuse the domain and storage concepts, but no mobile target or local AI architecture is implemented.
+Materials Intelligence is a native SwiftUI macOS 15+ application with one Xcode app target and no third-party runtime. `App` opens the local database, `UI` reads and writes through `KnowledgeStore`, `Domain` holds value models, `Database` owns SQLite statements and migration, and `AI` owns local question answering. No mobile target is implemented.
 
 ## Domain and storage
 
@@ -10,7 +10,7 @@ The database resides in `Application Support/MaterialsIntelligence/knowledge.sql
 
 ## UI and lifecycle
 
-The primary `NavigationSplitView` contains Overview, Ask, Search, Library, Materials, Damage Mechanisms, Standards, Components, Sources, Claims, Relationships, and Settings. Ask is an explicit Phase 5 placeholder. Record and claim forms update existing stable IDs. Claims can move through all six states, including archive without erasing provenance. Relationship creation optionally cites a claim; removal requires confirmation and leaves its records/claim intact. Record, claim, and Library deletions require confirmation. References that would be orphaned block deletion and the UI explains the dependency.
+The primary `NavigationSplitView` contains Overview, Ask, Search, Library, Materials, Damage Mechanisms, Standards, Components, Sources, Claims, Relationships, and Settings. Ask provides Phase 5 local answering when the on-device model is available. Record and claim forms update existing stable IDs. Claims can move through all six states, including archive without erasing provenance. Relationship creation optionally cites a claim; removal requires confirmation and leaves its records/claim intact. Record, claim, and Library deletions require confirmation. References that would be orphaned block deletion and the UI explains the dependency.
 
 ## Search
 
@@ -22,4 +22,12 @@ Search turns Unicode letter/number runs into quoted prefix tokens with the `*` o
 
 `documents` stores title, organization/author, revision/year, source type, notes, filename, and base64 security-scoped bookmark. `document_records` associates documents with knowledge records. The Library editor can update metadata and associations under the same document ID. Files stay at their original locations; content is neither copied nor extracted. On open, the app resolves the bookmark, starts scoped access, checks readability, asks macOS to open the URL, and stops scoped access. If the bookmark is stale, it refreshes and stores a replacement when possible. “Locate file…” lets the user restore a missing, moved, or inaccessible reference without changing metadata identity or associations. Broken file access never deletes engineering knowledge.
 
-Data flow: SwiftUI view → `KnowledgeStore` → SQLite/FTS5 → value models → SwiftUI. Normal operation uses no network. A future Phase 5 may reuse deterministic search, but this project has no AI, embeddings, or vector store.
+## Local question answering
+
+Ask calls `LocalRAG`, which uses the existing `KnowledgeStore.search` FTS5 path and resolves claim hits and linked record hits to stored `EngineeringClaim`, subject, and source records. Archived and superseded claims are excluded. Only Reviewed or Verified claims enter the model context; Draft and Unverified matches remain visible as evidence gaps. The context builder limits candidates to six claims, clips field lengths, and caps the prompt at 7,000 characters. It supplies exact claim IDs, verification states, source names, and locators. Library metadata may affect FTS ranking, but PDF/document content is never supplied as evidence.
+
+`LocalAIProvider` isolates generation; the sole implementation is `AppleLocalProvider`, using `SystemLanguageModel.default` and `LanguageModelSession` on macOS 26+ when the on-device model reports available. macOS 15–25 and unsupported or unready Apple Intelligence runtimes show a clear unavailable state. No cloud fallback, key, network request, embedding index, or second search store exists.
+
+The model is instructed to return JSON answer points with stored claim IDs. `LocalRAG` rejects malformed responses, unknown IDs, points without citations, and excessive output. The UI maps accepted IDs back to records from the same retrieval, shows generated explanation separately from supporting claims and sources, displays verification states, and opens stored claim/source records. Citation IDs are structurally validated; semantic support still requires human engineering review. When evidence is absent or only unreviewed, Ask refuses before generation. If generation cannot produce a traceable answer, Ask shows retrieved evidence without a generated conclusion. Retrieved strings and the question are labelled untrusted; the trusted provider instruction prohibits following directions inside them.
+
+Data flow: SwiftUI Ask → `LocalRAG` → existing `KnowledgeStore.search`/SQLite FTS5 → bounded evidence context → on-device Apple model → validated claim-ID mapping → SwiftUI. The answer is transient and never written to the knowledge database. Normal operation uses no network.

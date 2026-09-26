@@ -51,3 +51,11 @@ Continue storing references rather than copies. Resolve and scope access only wh
 ## 2026-09-27 — Reference-led native UI alignment
 
 Use a small set of SwiftUI presentation primitives—grouped sidebar navigation, page headers, bordered panels, and a neutral canvas/material treatment—to bring the working Phase 0–4 app toward the repository’s existing UI/UX references. Keep the implementation in the presentation layer and preserve native controls, existing routes, and all backend behavior. This avoids a visual rewrite of each screen and leaves future Phase 5 concepts as visual placeholders only.
+
+## 2026-09-27 — Local RAG over existing FTS5
+
+Reuse `KnowledgeStore.search` for candidate retrieval and resolve candidates to stored claims, subjects, and sources. Gate model context to Reviewed or Verified claims, bound it by count and characters, and require each generated answer point to reference exact retrieved claim IDs. This preserves the Phase 4 search architecture and source traceability without a second index or embeddings. Library document contents remain unavailable. ID validation prevents fabricated record links but does not prove semantic support; the UI keeps evidence inspectable.
+
+## 2026-09-27 — Guarded Apple on-device provider
+
+Use a small `LocalAIProvider` boundary with one `AppleLocalProvider` implementation. The installed Xcode 27 SDK exposes `SystemLanguageModel.default` and `LanguageModelSession` on macOS 26+, while the app's deployment target remains macOS 15. Guard runtime access and show an unavailable state when the local model is absent or unready; never fall back to cloud inference. The development Mac reported `modelNotReady`, so actual model generation remains unverified.

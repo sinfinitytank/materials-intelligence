@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Phase 0–4 remediation and verification plus the focused UI/UX alignment pass. Phase 5 has not started.
+Phase 5 local RAG implementation. Deterministic tests and app build pass; real-model and Ask GUI verification remain.
 
 ## Completed
 
@@ -36,8 +36,16 @@ These checks are **UNVERIFIED** in this Codex environment. No automated test sub
 
 ## Known limits
 
-The sample engineering data is illustrative. Search is lexical OR-prefix FTS5 rather than semantic retrieval; it searches document metadata, not document contents. The current record-kind and claim-state filters are broad; specialized material-family, standard-organization, tags, and date fields are not modeled yet. There is no Xcode test target; repository tests compile directly with `swiftc`. No AI, ingestion, graph explorer, or sync exists. The UI was build-verified but full visual comparison, resizing, dark/light appearance, accessibility, and end-to-end GUI workflows remain manual checks.
+The sample engineering data is illustrative. Search is lexical OR-prefix FTS5 rather than semantic retrieval; it searches document metadata, not document contents. The current record-kind and claim-state filters are broad; specialized material-family, standard-organization, tags, and date fields are not modeled yet. There is no Xcode test target; repository tests compile directly with `swiftc`. Local AI/RAG is implemented; no ingestion, graph explorer, or sync exists. The UI was build-verified but full visual comparison, resizing, dark/light appearance, accessibility, and end-to-end GUI workflows remain manual checks.
 
 ## Exact next action
 
-Complete the three manual GUI checks above, including visual comparison of Overview, a record detail, Search, and Library against the repository reference images. Start Phase 5 only after separate explicit authorization.
+Complete the three manual GUI checks above, including visual comparison of Overview, a record detail, Search, and Library against the repository reference images. Finish Phase 5 runtime checks on a Mac with the Apple on-device model available.
+
+## Phase 5 checkpoint — 2026-09-27
+
+- Existing SQLite FTS5 search is the only retrieval path. `LocalRAG` resolves ranked hits to claims, subjects, and sources, gates model context to Reviewed or Verified claims, and bounds context to six claims and 7,000 characters.
+- `AppleLocalProvider` uses `SystemLanguageModel.default` on macOS 26+; unavailable devices show a reason. No cloud provider, internet request, document-content extraction, or knowledge-base write was added.
+- Ask presents question input, loading/error and unavailable states, generated answer points, source/claim links, and insufficient-evidence findings using native panels.
+- Debug and Release arm64 builds and existing repository plus new deterministic RAG tests: **PASS**. App process launch: **PASS**. Actual model response: **UNVERIFIED** (`modelNotReady`). Ask GUI interaction/visual check: **UNVERIFIED** (display capture failed; assistive access denied). Offline-disconnected run: **UNVERIFIED**.
+- Next task: on an eligible Mac with the on-device model ready, enter a genuine source-backed Reviewed/Verified Alloy 725 claim, ask the representative question while offline, inspect the answer and open each claim/source record, then make one targeted correction pass.

@@ -27,14 +27,92 @@ private struct Sidebar: View { @Binding var selection: AppSection?
 private extension AppSection { var symbol:String { switch self { case .overview:"house"; case .ask:"questionmark.bubble"; case .search:"magnifyingglass"; case .library:"books.vertical"; case .materials:"cube"; case .mechanisms:"exclamationmark.shield"; case .standards:"text.book.closed"; case .components:"gearshape"; case .sources:"doc.text"; case .claims:"checkmark.seal"; case .relationships:"link"; case .settings:"gear" } } }
 
 private struct Page: View { let section: AppSection; let store: KnowledgeStore?; @Binding var refresh: UUID; @Binding var targetID:String?; let error: String?; let openResult:(SearchResult)->Void
- var body: some View { Group { if let error { ContentUnavailableView("Database unavailable", systemImage:"externaldrive.badge.exclamationmark", description:Text(error)) } else if let store { if let kind=section.kind { RecordPage(kind:kind, store:store, refresh:$refresh, targetID:$targetID) } else if section == .search { SearchPage(store:store, openResult:openResult) } else if section == .library { LibraryPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .claims { ClaimsPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .relationships { RelationshipsPage(store:store, refresh:$refresh) } else if section == .ask { AskPlaceholder() } else if section == .settings { SettingsPage() } else { Overview(store:store) } } else { ProgressView("Opening local knowledge") } }.toolbar { Button("Refresh", systemImage:"arrow.clockwise") { refresh=UUID() } } }
+ var body: some View { Group { if let error { ContentUnavailableView("Database unavailable", systemImage:"externaldrive.badge.exclamationmark", description:Text(error)) } else if let store { if let kind=section.kind { RecordPage(kind:kind, store:store, refresh:$refresh, targetID:$targetID) } else if section == .search { SearchPage(store:store, openResult:openResult) } else if section == .library { LibraryPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .claims { ClaimsPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .relationships { RelationshipsPage(store:store, refresh:$refresh) } else if section == .ask { AskPage(store: store, openResult: openResult) } else if section == .settings { SettingsPage() } else { Overview(store:store) } } else { ProgressView("Opening local knowledge") } }.toolbar { Button("Refresh", systemImage:"arrow.clockwise") { refresh=UUID() } } }
 }
 private struct SettingsPage:View { var body:some View { VStack(alignment: .leading, spacing: 18) { PageHeader(title: "Settings", subtitle: "Local storage and application behavior"); Panel { VStack(alignment: .leading, spacing: 12) { LabeledContent("Storage",value:"Local Application Support database"); LabeledContent("Search",value:"Offline SQLite FTS5"); Divider(); Text("Documents remain at their original locations. Library keeps access bookmarks and metadata.").foregroundStyle(.secondary) } } }.padding(32).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(MITheme.canvas) } }
 
 private enum MITheme { static let canvas = Color(nsColor: .underPageBackgroundColor); static let blue = Color.accentColor }
 private struct Panel<Content: View>: View { @ViewBuilder let content: () -> Content; var body: some View { content().padding(18).background(.background, in: RoundedRectangle(cornerRadius: 12, style: .continuous)).overlay(RoundedRectangle(cornerRadius: 12).stroke(.quaternary)) } }
 private struct PageHeader: View { let title: String; let subtitle: String; var body: some View { VStack(alignment: .leading, spacing: 4) { Text(title).font(.system(size: 30, weight: .bold, design: .rounded)); Text(subtitle).foregroundStyle(.secondary) } } }
-private struct AskPlaceholder: View { var body: some View { VStack(alignment: .leading, spacing: 12) { PageHeader(title: "Ask", subtitle: "Evidence-grounded answers from your local materials knowledge base."); Panel { ContentUnavailableView("Local answering is planned for Phase 5", systemImage: "questionmark.bubble", description: Text("Search and review your sources in the meantime.")) }.frame(maxWidth: 720) }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(32).background(MITheme.canvas) } }
+private struct AskPage: View {
+    let store: KnowledgeStore
+    let openResult: (SearchResult) -> Void
+    @State private var question = ""
+    @State private var answer: LocalAnswer?
+    @State private var error = ""
+    @State private var loading = false
+    private let provider = AppleLocalProvider()
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                PageHeader(title: "Ask", subtitle: "Evidence-grounded answers from your local materials knowledge base.")
+                HStack { Image(systemName: "desktopcomputer"); Text("LOCAL · database search and on-device model only").font(.caption.weight(.semibold)) }.foregroundStyle(.secondary)
+                if let unavailable = provider.availabilityMessage { Panel { Label(unavailable, systemImage: "cpu").foregroundStyle(.orange) } }
+                Panel {
+                    VStack(alignment: .leading, spacing: 10) {
+                        TextField("Ask an engineering question…", text: $question, axis: .vertical).lineLimit(2...4)
+                        HStack { Spacer(); Button("Ask locally") { submit() }.buttonStyle(.borderedProminent).disabled(question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || loading) }
+                    }
+                }
+                if loading { ProgressView("Searching evidence and asking the local model…") }
+                if !error.isEmpty { Panel { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange) } }
+                if let answer {
+                    Panel {
+                        VStack(alignment: .leading, spacing: 14) {
+                            HStack { SectionTitle("Answer", icon: "text.bubble"); Spacer(); if answer.generatedLocally { StatusBadge(title: "LOCAL — no internet used", color: .green) } }
+                            if let message = answer.message { Text(message).foregroundStyle(.secondary) }
+                            ForEach(answer.points) { point in
+                                VStack(alignment: .leading, spacing: 7) {
+                                    Text(point.text)
+                                    Text("Generated explanation · check the claims below").font(.caption).foregroundStyle(.secondary)
+                                    ForEach(point.evidence) { evidence in
+                                        Button { open(.claim, evidence.claim.id, title: evidence.claim.statement) } label: {
+                                            Label("Claim · \(evidence.claim.status.title) · \(evidence.subject.name)", systemImage: "checkmark.seal")
+                                        }.buttonStyle(.link)
+                                    }
+                                }
+                                if point.id != answer.points.last?.id { Divider() }
+                            }
+                        }
+                    }
+                    if !answer.found.isEmpty {
+                        Panel {
+                            VStack(alignment: .leading, spacing: 12) {
+                                SectionTitle("Supporting claims and sources", icon: "books.vertical")
+                                ForEach(answer.found) { item in
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        Text(item.claim.statement)
+                                        Text("\(item.claim.status.title) · \(item.subject.name) · \(item.claim.locator.isEmpty ? "No locator" : item.claim.locator)").font(.caption).foregroundStyle(.secondary)
+                                        HStack {
+                                            Button("Open claim") { open(.claim, item.claim.id, title: item.claim.statement) }
+                                            Button("Open source: \(item.source.name)") { open(.record, item.source.id, title: item.source.name, kind: .source) }
+                                        }.buttonStyle(.link)
+                                    }
+                                    Divider()
+                                }
+                            }
+                        }
+                    }
+                }
+                Text("Library document contents are not indexed. Illustrative or unreviewed claims do not authorize a generated engineering conclusion.").font(.caption).foregroundStyle(.secondary)
+            }.frame(maxWidth: 860, alignment: .leading).padding(32).frame(maxWidth: .infinity, alignment: .leading)
+        }.background(MITheme.canvas)
+    }
+
+    private func open(_ type: SearchEntityType, _ id: String, title: String, kind: RecordKind? = nil) {
+        openResult(SearchResult(id: id, entityType: type, title: title, detail: "", kind: kind?.rawValue ?? "", score: 0))
+    }
+    private func submit() {
+        let submitted = question
+        answer = nil; error = ""; loading = true
+        Task { @MainActor in
+            do { answer = try await LocalRAG(store: store, provider: provider).ask(submitted) }
+            catch { self.error = error.localizedDescription }
+            loading = false
+        }
+    }
+}
 
 private struct Overview: View { let store: KnowledgeStore
  var body: some View { ScrollView { VStack(alignment: .leading, spacing: 20) { HStack(alignment: .bottom) { PageHeader(title: "Materials Intelligence", subtitle: "Local engineering knowledge base"); Spacer(); Text("Materials. Context. Confidence.\nFor a more reliable tomorrow.").font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.trailing) }
