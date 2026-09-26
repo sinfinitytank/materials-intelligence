@@ -72,7 +72,7 @@ final class KnowledgeStore {
     }
     private func migrate() throws {
         let version = try schemaVersion()
-        guard version <= 3 else { throw KnowledgeStoreError(message: "Database schema is newer than this app") }
+        guard version <= 4 else { throw KnowledgeStoreError(message: "Database schema is newer than this app") }
         if version == 0 {
             try execute("BEGIN IMMEDIATE")
             do {
@@ -126,6 +126,12 @@ final class KnowledgeStore {
                 try rebuildSearchIndex()
                 try execute("COMMIT")
             } catch { try? execute("ROLLBACK"); throw error }
+        }
+        if version <= 3 {
+            try transaction {
+                try execute("CREATE TABLE research_sessions (id TEXT PRIMARY KEY, snapshot TEXT NOT NULL)")
+                try execute("PRAGMA user_version = 4")
+            }
         }
     }
     func save(_ record: KnowledgeRecord) throws {
@@ -240,5 +246,164 @@ final class KnowledgeStore {
             try save(KnowledgeRelationship(id: "demo:relationship:tubing-725", fromID: component.id, predicate: "commonly_uses", toID: material.id))
             try execute("COMMIT")
         } catch { try? execute("ROLLBACK"); throw error }
+    }
+}
+
+// Research snapshots are staging/audit data only and are never indexed as knowledge.
+extension KnowledgeStore {
+    func researchSessions() throws -> [ResearchSession] {
+        var snapshots: [String] = []
+        try query("SELECT snapshot FROM research_sessions ORDER BY rowid DESC") { snapshots.append(text($0, 0)) }
+        return try snapshots.map { try JSONDecoder().decode(ResearchSession.self, from: Data($0.utf8)) }
+    }
+    private func writeResearch(_ session: ResearchSession) throws {
+        let data = try JSONEncoder().encode(session)
+        try execute("INSERT INTO research_sessions(id,snapshot) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET snapshot=excluded.snapshot", [session.id, String(decoding: data, as: UTF8.self)])
+    }
+    func importResearch(_ data: Data) throws -> ResearchSession {
+        let package = try ResearchPackage.parse(data)
+        let session = ResearchSession(originalJSON: String(decoding: data, as: UTF8.self), package: package)
+        try writeResearch(session)
+        return session
+    }
+    private func currentResearch(_ session: ResearchSession) throws -> ResearchSession {
+        guard let current = try researchSessions().first(where: { $0.id == session.id }), current.status == "staged", current.revision == session.revision else {
+            throw KnowledgeStoreError(message: "This session changed or is closed. Reload Research before continuing.")
+        }
+        return current
+    }
+    /// Editing invalidates all approvals, since changing a source/entity can affect dependent claims.
+    func editResearch(_ session: ResearchSession, data: Data) throws -> ResearchSession {
+        let package = try ResearchPackage.parse(data)
+        var updated = try currentResearch(session)
+        guard package.packageID == updated.package.packageID else { throw KnowledgeStoreError(message: "Keep the original packageID when editing.") }
+        updated.package = package; updated.reviews = [:]; updated.revision += 1
+        try writeResearch(updated)
+        return updated
+    }
+    func decideResearch(_ session: ResearchSession, itemID: String, decision: ResearchDecision, targetID: String? = nil) throws -> ResearchSession {
+        var updated = try currentResearch(session)
+        let ids = updated.package.entities.map(\.id) + updated.package.claims.map(\.id) + updated.package.relationships.map(\.id)
+        guard ids.contains(itemID) else { throw KnowledgeStoreError(message: "Unknown proposal \(itemID).") }
+        if decision == .merge {
+            guard let targetID, try researchMatches(updated.package, itemID: itemID).contains(where: { $0.id == targetID && $0.canMerge }) else {
+                throw KnowledgeStoreError(message: "Choose an eligible existing match. Claims require identical evidence, conditions, and locator; differing evidence must remain a separate claim.")
+            }
+        }
+        updated.reviews[itemID] = ResearchReview(decision: decision, targetID: decision == .merge ? targetID : nil)
+        updated.revision += 1; updated.lastError = nil
+        try writeResearch(updated)
+        return updated
+    }
+    func cancelResearch(_ session: ResearchSession) throws -> ResearchSession {
+        var updated = try currentResearch(session)
+        updated.status = "cancelled"; updated.revision += 1
+        try writeResearch(updated)
+        return updated
+    }
+    func researchMatches(_ package: ResearchPackage, itemID: String) throws -> [ResearchMatch] {
+        let local = try records()
+        func entityMatches(_ entity: ResearchEntity) -> [KnowledgeRecord] {
+            let names = Set(([entity.name, entity.secondary ?? ""] + (entity.aliases ?? [])).map(researchNormalize).filter { !$0.isEmpty })
+            return local.filter { record in
+                guard record.kind.rawValue == entity.kind else { return false }
+                let aliases = record.detail.components(separatedBy: "\n").filter { $0.hasPrefix("Aliases: ") }.flatMap { $0.dropFirst(9).components(separatedBy: "; ") }
+                let localNames = Set(([record.name, record.secondary] + aliases).map(researchNormalize).filter { !$0.isEmpty })
+                return !names.isDisjoint(with: localNames)
+            }
+        }
+        func resolved(_ id: String) -> [String] { package.entities.first(where: { $0.id == id }).map { entityMatches($0).map(\.id) } ?? [] }
+        if let entity = package.entities.first(where: { $0.id == itemID }) {
+            return entityMatches(entity).map { record in
+                let sourceEqual = entity.kind != "source" || (record.detail == entity.permanentDetail && record.secondary == (entity.secondary ?? ""))
+                return ResearchMatch(id: record.id, title: "\(record.name) — \(record.secondary)\n\(record.detail)", reason: sourceEqual ? "Existing entity/designation match; reuse leaves stored fields unchanged" : "Possible source duplicate; metadata/revision differs. Edit the proposed title to keep a separate source.", canMerge: sourceEqual)
+            }
+        }
+        if let proposed = package.claims.first(where: { $0.id == itemID }) {
+            let subjects = resolved(proposed.subjectID), sources = resolved(proposed.sourceID)
+            return try claims().filter { subjects.contains($0.subjectID) && researchNormalize($0.predicate) == researchNormalize(proposed.predicate) }.map { claim in
+                let statementEqual = claim.statement == proposed.statement
+                let conditionsEqual = claim.conditions == (proposed.conditions ?? "")
+                let evidenceEqual = sources.contains(claim.sourceID) && claim.locator == (proposed.locator ?? "")
+                let exact = statementEqual && conditionsEqual && evidenceEqual && claim.predicate == proposed.predicate
+                let reason = exact ? "Existing matching claim" : !conditionsEqual ? "Related claim with different conditions" : statementEqual ? "Matching statement with different evidence/locator" : "Possible conflict: same subject/predicate/conditions; review evidence (not an established contradiction)"
+                return ResearchMatch(id: claim.id, title: "\(claim.statement)\nConditions: \(claim.conditions)\nSource: \(claim.sourceID) · \(claim.locator) · \(claim.status.title)", reason: reason, canMerge: exact)
+            }
+        }
+        if let proposed = package.relationships.first(where: { $0.id == itemID }) {
+            let from = resolved(proposed.fromID), to = resolved(proposed.toID)
+            return try relationships().filter { from.contains($0.fromID) && to.contains($0.toID) && researchNormalize($0.predicate) == researchNormalize(proposed.predicate) }.map {
+                ResearchMatch(id: $0.id, title: "\($0.fromID) → \($0.predicate) → \($0.toID)", reason: "Existing relationship; supporting evidence must also match at commit", canMerge: true)
+            }
+        }
+        return []
+    }
+    func commitResearch(_ session: ResearchSession) throws -> ResearchSession {
+        var updated = try currentResearch(session)
+        try updated.package.validate()
+        guard updated.reviews.values.contains(where: { $0.decision == .accept || $0.decision == .merge }) else { throw KnowledgeStoreError(message: "Approve at least one proposal first.") }
+        do {
+            try transaction {
+                // Acquire the SQLite writer before checking the persisted revision again.
+                try execute("UPDATE research_sessions SET snapshot=snapshot WHERE id=?", [session.id])
+                _ = try currentResearch(session)
+                var mapping: [String: String] = [:]
+                func decision(_ id: String) -> ResearchReview { updated.reviews[id] ?? ResearchReview() }
+                func reference(_ id: String) throws -> String {
+                    guard let result = mapping[id] else { throw KnowledgeStoreError(message: "Dependency \(id) is not approved. Accept or merge it explicitly, or reject the dependent proposal.") }
+                    return result
+                }
+                for entity in updated.package.entities {
+                    let review = decision(entity.id)
+                    if review.decision == .merge {
+                        guard let target = review.targetID, try researchMatches(updated.package, itemID: entity.id).contains(where: { $0.id == target && $0.canMerge }) else { throw KnowledgeStoreError(message: "Entity match changed; review \(entity.id) again.") }
+                        mapping[entity.id] = target
+                    } else if review.decision == .accept {
+                        let record = KnowledgeRecord(kind: RecordKind(rawValue: entity.kind)!, name: entity.name, detail: entity.permanentDetail, secondary: entity.secondary ?? "")
+                        try save(record); mapping[entity.id] = record.id
+                    }
+                }
+                for proposed in updated.package.claims {
+                    let review = decision(proposed.id)
+                    guard review.decision == .accept || review.decision == .merge else { continue }
+                    let subject = try reference(proposed.subjectID), source = try reference(proposed.sourceID)
+                    if review.decision == .merge {
+                        guard let target = review.targetID, let existing = try claim(id: target), existing.subjectID == subject, existing.sourceID == source, existing.predicate == proposed.predicate, existing.statement == proposed.statement, existing.conditions == (proposed.conditions ?? ""), existing.locator == (proposed.locator ?? "") else { throw KnowledgeStoreError(message: "Claim merge requires identical stored statement, conditions and evidence: \(proposed.id).") }
+                        mapping[proposed.id] = target
+                    } else {
+                        let notes = [proposed.notes ?? "", "Research session: \(updated.id); package: \(updated.package.packageID); boundary: \(updated.package.boundary)", proposed.confidence.map { "External confidence (not verification): \($0)" } ?? ""].filter { !$0.isEmpty }.joined(separator: "\n")
+                        let claim = EngineeringClaim(subjectID: subject, predicate: proposed.predicate, statement: proposed.statement, conditions: proposed.conditions ?? "", sourceID: source, locator: proposed.locator ?? "", status: .unverified, notes: notes)
+                        try save(claim); mapping[proposed.id] = claim.id
+                    }
+                }
+                for proposed in updated.package.relationships {
+                    let review = decision(proposed.id)
+                    guard review.decision == .accept || review.decision == .merge else { continue }
+                    let from = try reference(proposed.fromID), to = try reference(proposed.toID)
+                    let supporting = try proposed.supportingClaimID.map { try reference($0) }
+                    if review.decision == .merge {
+                        guard let existing = try relationships().first(where: { $0.id == review.targetID }), existing.fromID == from, existing.toID == to, existing.predicate == proposed.predicate, existing.supportingClaimID == supporting else { throw KnowledgeStoreError(message: "Relationship or supporting evidence differs: \(proposed.id).") }
+                        mapping[proposed.id] = existing.id
+                    } else {
+                        let edge = KnowledgeRelationship(fromID: from, predicate: proposed.predicate, toID: to, supportingClaimID: supporting)
+                        try save(edge); mapping[proposed.id] = edge.id
+                    }
+                }
+                guard try foreignKeyViolations() == 0 else { throw KnowledgeStoreError(message: "Research commit failed integrity check.") }
+                updated.results = mapping; updated.status = "committed"; updated.revision += 1; updated.lastError = nil
+                try writeResearch(updated)
+            }
+        } catch {
+            // Knowledge and audit commit rolled back together. Retain a retryable failure note.
+            let failureMessage = error.localizedDescription
+            try? transaction {
+                try execute("UPDATE research_sessions SET snapshot=snapshot WHERE id=?", [session.id])
+                var failed = try currentResearch(session)
+                failed.lastError = failureMessage
+                try writeResearch(failed)
+            }
+            throw error
+        }
+        return updated
     }
 }

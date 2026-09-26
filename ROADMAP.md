@@ -15,3 +15,7 @@ Current work: **Phase 5 implementation build and deterministic tests pass; actua
 Phase 4 provides offline SQLite FTS5 search, record/claim/document result navigation, filters, and a bookmark-referenced local document library. See `CURRENT_STATE.md` and `MILESTONE.md` for verified behavior and remaining manual checks.
 
 Phase 5 uses Apple on-device Foundation Models when available and reuses Phase 4 FTS5. See `ARCHITECTURE.md`, `CURRENT_STATE.md`, and `MILESTONE.md` for the exact verification boundary. Phase 6 has not begun.
+
+## Phase 6 checkpoint update — 2026-09-27
+
+This update supersedes “Phase 6 has not begun” above: **Phase 6 backend implemented; phase INCOMPLETE.** Versioned research packages, persisted staging/audit and atomic reviewed-decision commits are tested. Native Research UI and end-to-end runtime acceptance remain. Resume with the exact next task in `RESEARCH_INGESTION.md`. Phases 7–10 remain unimplemented.

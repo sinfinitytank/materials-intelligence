@@ -47,7 +47,7 @@ import SQLite3
         try legacyFixture(at: url)
         do {
             let store = try KnowledgeStore(url: url)
-            try check(try store.schemaVersion() == 3, "migration version")
+            try check(try store.schemaVersion() == 4, "migration version")
             try check(try store.foreignKeyViolations() == 0, "migration foreign keys")
             try check(try store.record(id: "m")?.name == "Alloy 725", "material preserved")
             try check(try store.record(id: "s")?.kind == .source, "source preserved")
@@ -59,7 +59,7 @@ import SQLite3
             try store.save(edited)
         }
         let reopened = try KnowledgeStore(url: url)
-        try check(try reopened.schemaVersion() == 3, "reopened migration version")
+        try check(try reopened.schemaVersion() == 4, "reopened migration version")
         try check(try reopened.foreignKeyViolations() == 0, "reopened foreign keys")
         try check(try reopened.claim(id: "c")?.status == .verified, "claim lifecycle persisted")
         try check(try reopened.relationships().first?.supportingClaimID == "c", "reopened relationship")
@@ -68,7 +68,7 @@ import SQLite3
         let url = temporaryURL(); defer { try? FileManager.default.removeItem(at: url) }
         do {
             let store = try KnowledgeStore(url: url)
-            try check(try store.schemaVersion() == 3, "fresh schema")
+            try check(try store.schemaVersion() == 4, "fresh schema")
             try check(try store.foreignKeyViolations() == 0, "fresh foreign keys")
             try store.seedIfEmpty()
             let initial = try store.records().count

@@ -49,3 +49,9 @@ Complete the three manual GUI checks above, including visual comparison of Overv
 - Ask presents question input, loading/error and unavailable states, generated answer points, source/claim links, and insufficient-evidence findings using native panels.
 - Debug and Release arm64 builds and existing repository plus new deterministic RAG tests: **PASS**. App process launch: **PASS**. Actual model response: **UNVERIFIED** (`modelNotReady`). Ask GUI interaction/visual check: **UNVERIFIED** (display capture failed; assistive access denied). Offline-disconnected run: **UNVERIFIED**.
 - Next task: on an eligible Mac with the on-device model ready, enter a genuine source-backed Reviewed/Verified Alloy 725 claim, ask the representative question while offline, inspect the answer and open each claim/source record, then make one targeted correction pass.
+
+## Phase 6 safe checkpoint — backend only
+
+**INCOMPLETE.** Schema/parser, persistent staging, deterministic matching, conservative decisions, atomic commit/rollback, provenance and audit backend implemented. Existing store and RAG regressions plus new deterministic ingestion tests pass through `Scripts/test.sh`; Release build passes.
+
+Remaining: native import/review/edit/reuse/commit/cancel/history UI; additional edge-case tests listed in `RESEARCH_INGESTION.md`; actual app import/review/search/Ask workflow and visual correction pass; final architecture acceptance review. No actual-model acceptance is claimed. Exact next task is the Research UI over the tested backend. Allowance protection applies; do not start Phase 7.

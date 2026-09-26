@@ -59,3 +59,7 @@ Reuse `KnowledgeStore.search` for candidate retrieval and resolve candidates to 
 ## 2026-09-27 — Guarded Apple on-device provider
 
 Use a small `LocalAIProvider` boundary with one `AppleLocalProvider` implementation. The installed Xcode 27 SDK exposes `SystemLanguageModel.default` and `LanguageModelSession` on macOS 26+, while the app's deployment target remains macOS 15. Guard runtime access and show an unavailable state when the local model is absent or unready; never fall back to cloud inference. The development Mac reported `modelNotReady`, so actual model generation remains unverified.
+
+## 2026-09-27 — Phase 6 staged snapshots and identity reuse
+
+Use versioned JSON interchange and a schema-4 staging/audit table in the existing SQLite database. Keep original packages and final review snapshots; avoid a second knowledge store or event-sourcing framework. Deterministic matching offers candidates; explicit merge means reuse identity without overwriting stored engineering fields. Source revisions with differing metadata remain separate; claim reuse requires identical evidence/context. Commit repository writes, indexes and audit atomically. Imported claims remain Unverified and require the existing Claims lifecycle review before generated RAG answers. Native review UI remains the next unit; this backend checkpoint is not Phase 6 completion. No architectural replacement or Phase 7 feature was introduced.
