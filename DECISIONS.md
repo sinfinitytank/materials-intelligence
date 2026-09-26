@@ -52,6 +52,10 @@ Continue storing references rather than copies. Resolve and scope access only wh
 
 Use a small set of SwiftUI presentation primitives—grouped sidebar navigation, page headers, bordered panels, and a neutral canvas/material treatment—to bring the working Phase 0–4 app toward the repository’s existing UI/UX references. Keep the implementation in the presentation layer and preserve native controls, existing routes, and all backend behavior. This avoids a visual rewrite of each screen and leaves future Phase 5 concepts as visual placeholders only.
 
+## 2026-09-27 — Explicit native navigation hit targets
+
+Replace implicit `List(selection:)` navigation and row tagging in the sidebar, record browser, claims browser, and Library browser with explicit SwiftUI buttons and stable selected-state styling. The first UI pass could build successfully while leaving the main interaction paths unverified and visually static; explicit hit targets make every current Phase 0–4 route directly clickable without changing the data model. Phase 5 Ask/research behavior remains intentionally out of scope.
+
 ## 2026-09-27 — Local RAG over existing FTS5
 
 Reuse `KnowledgeStore.search` for candidate retrieval and resolve candidates to stored claims, subjects, and sources. Gate model context to Reviewed or Verified claims, bound it by count and characters, and require each generated answer point to reference exact retrieved claim IDs. This preserves the Phase 4 search architecture and source traceability without a second index or embeddings. Library document contents remain unavailable. ID validation prevents fabricated record links but does not prove semantic support; the UI keeps evidence inspectable.

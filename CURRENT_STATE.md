@@ -23,7 +23,7 @@ Library stores metadata, associations, original filename, and a base64 security-
 
 ## UI/UX alignment pass
 
-The current native UI follows the repository reference images as closely as the existing Phase 0–4 surface allows: a translucent grouped sidebar, icon-led sections, compact native toolbar actions, a cool neutral canvas, bordered panels with restrained corner radii, rounded typography for major headings, denser overview metrics, a sketch-style Search bar/filter row, a Library navigator/detail split, and record profile/evidence/relationship panels. The pass is presentation-only and does not implement the future Ask/research-review functionality depicted in concept imagery.
+The current native UI follows the repository reference images as closely as the existing Phase 0–4 surface allows: a translucent grouped sidebar, icon-led sections, compact native toolbar actions, a cool neutral canvas, bordered panels with restrained corner radii, rounded typography for major headings, overview metrics, a sketch-style Search bar/filter row, a Library navigator/detail split, and record profile/evidence/relationship panels. Sidebar, overview coverage/quick-action controls, and Materials, Claims, and Library browser rows use explicit clickable native buttons with selected/pressed states. The pass does not implement the future Ask/research-review functionality depicted in concept imagery.
 
 ## Verified and unverified
 

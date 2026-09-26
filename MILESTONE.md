@@ -16,12 +16,13 @@ Phase 5 local RAG implementation. Deterministic tests and app build pass; real-m
 - Updated architecture and status documentation to reflect verified behavior and manual limits.
 - Completed a presentation-only UI/UX alignment pass in `RootView.swift`: reference-led sidebar hierarchy, native material treatment, balanced window sizing, overview metric/panel composition, page headers, and shared panel primitives. No database, domain, search, bookmark, or engineering-data behavior was changed.
 - Completed the full visual GUI follow-up for the implemented Phase 0–4 surfaces: Search search-bar/filter treatment, Library navigator/detail panels, and record profile/evidence/relationship panels with status badges. Concept-only Phase 5 Ask/research-review behavior remains unimplemented.
+- Repaired the highest-impact interaction gap: sidebar navigation, overview coverage rows/quick actions, and Materials, Claims, and Library browser rows now use explicit clickable native buttons with selected and pressed states.
 
 ## Build and test status — 2026-09-27
 
-- Xcode 27.0 / Swift 6.4 Debug arm64 build after UI pass: **PASS**.
+- Xcode 27.0 / Swift 6.4 Debug arm64 build after interaction pass: **PASS**.
 - Directly compiled `KnowledgeStoreTests` executable: **PASS**.
-- Full visual GUI follow-up Debug arm64 build: **PASS**.
+- Direct repository regression executable after interaction pass: **PASS** (`KnowledgeStore tests passed`).
 - Release app launched as a process for five seconds with no startup failure: **PASS**. This does not establish full GUI usability.
 - `PRAGMA foreign_key_check` on fresh, migrated, and reopened test databases: **PASS**.
 - Git checkpoint: see latest remediation commit.
@@ -36,7 +37,7 @@ These checks are **UNVERIFIED** in this Codex environment. No automated test sub
 
 ## Known limits
 
-The sample engineering data is illustrative. Search is lexical OR-prefix FTS5 rather than semantic retrieval; it searches document metadata, not document contents. The current record-kind and claim-state filters are broad; specialized material-family, standard-organization, tags, and date fields are not modeled yet. There is no Xcode test target; repository tests compile directly with `swiftc`. Local AI/RAG is implemented; no ingestion, graph explorer, or sync exists. The UI was build-verified but full visual comparison, resizing, dark/light appearance, accessibility, and end-to-end GUI workflows remain manual checks.
+The sample engineering data is illustrative. Search is lexical OR-prefix FTS5 rather than semantic retrieval; it searches document metadata, not document contents. The current record-kind and claim-state filters are broad; specialized material-family, standard-organization, tags, and date fields are not modeled yet. There is no Xcode test target; repository tests compile directly with `swiftc`. Local AI/RAG is implemented; no ingestion, graph explorer, or sync exists. The UI was build-verified but full visual comparison, resizing, dark/light appearance, accessibility, and end-to-end GUI workflows remain manual checks. Ask is implemented; research-review remains outside Phase 5.
 
 ## Exact next action
 
