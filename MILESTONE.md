@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Phase 0 — Project Foundation: complete.
+Phase 1 — Native Mac App Shell: complete.
 
 ## Completed
 
@@ -11,15 +11,17 @@ Phase 0 — Project Foundation: complete.
 - Added the permanent project instructions and architecture/roadmap/state records.
 - Verified a clean Release build.
 - Created a Git checkpoint.
+- Added a native `NavigationSplitView` application shell with all eight primary destinations.
+- Added reusable empty states, summary cards, toolbar actions, search placement, and basic Settings content.
 
 ## Build status
 
-Build verified with Xcode 27.0, Swift 6.4, macOS deployment target 15.0.
+Build verified with Xcode 27.0, Swift 6.4, macOS deployment target 15.0. Release `xcodebuild` succeeded for arm64.
 
 ## Known limitations
 
-The root view is intentionally a placeholder. No Phase 1 navigation or product functionality exists.
+Engineering data, persistence, search, AI, research ingestion, and knowledge graph functionality remain intentionally absent until later phases.
 
 ## Recommended next action
 
-Open the project to inspect the foundation, then explicitly authorize Phase 1 — Native Mac App Shell.
+Manually launch the Release app and verify sidebar navigation, resizing, light/dark appearance, and keyboard selection. Then explicitly authorize Phase 2 — Engineering Knowledge Model.

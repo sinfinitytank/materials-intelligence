@@ -11,3 +11,7 @@ Create only the application entry point and a root view. Future source boundarie
 ## 2026-09-27 — Development build signing
 
 The local development target disables code signing so it can be built and verified without a configured Apple development team. This does not change the native app architecture; distribution signing remains outside Phase 0.
+
+## 2026-09-27 — Native Phase 1 application shell
+
+Use `NavigationSplitView`, native `List` selection, SF Symbols, system typography, native toolbar placement, and SwiftUI `ContentUnavailableView` for the first product shell. This keeps navigation predictable and information-dense on macOS without introducing a web runtime, third-party design system, or future-phase backend behavior.

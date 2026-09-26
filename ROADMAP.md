@@ -1,11 +1,11 @@
 # Roadmap
 
-Current phase: **Phase 0 — Project Foundation** (complete).
+Current phase: **Phase 1 — Native Mac App Shell** (complete).
 
 | Phase | Status |
 |---|---|
 | 0 — Project Foundation | Complete |
-| 1 — Native Mac App Shell | Next |
+| 1 — Native Mac App Shell | Complete |
 | 2–10 | Planned |
 
-Phase 1 must be explicitly requested and should build the native macOS navigation shell while preserving this foundation. No Phase 1 functionality is present in this checkpoint.
+Phase 2 must be explicitly requested. It should add the structured engineering knowledge model while preserving the Phase 1 native shell. No later-phase functionality is present in this checkpoint.
