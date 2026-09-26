@@ -4,6 +4,8 @@
 
 Phase 5 local RAG implementation. Deterministic tests and app build pass; real-model and Ask GUI verification remain.
 
+The application deployment target is macOS 26 or later. Older macOS compatibility is intentionally not supported.
+
 ## Completed
 
 - Preserved the native SwiftUI architecture and Phase 4 Search/Library work.

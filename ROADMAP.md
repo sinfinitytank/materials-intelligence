@@ -2,6 +2,8 @@
 
 Current work: **Phase 5 implementation build and deterministic tests pass; actual on-device model and GUI verification remain.**
 
+Platform baseline: macOS 26 or later. The project does not preserve compatibility with earlier macOS releases.
+
 | Phase | Status |
 |---|---|
 | 0 — Project Foundation | Complete; GUI launch appearance check pending |

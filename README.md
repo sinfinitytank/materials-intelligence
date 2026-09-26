@@ -16,6 +16,7 @@ It is designed for engineers and researchers who need a focused place to keep ma
 - Document library for associating local research files with knowledge
 - Review-oriented workflows that help distinguish established information from work in progress
 - Privacy-conscious, local-first design for research conducted on the desktop
+- Guarded local retrieval-augmented Ask workflow using Apple’s on-device model when available
 
 ## Screenshots
 
@@ -29,9 +30,9 @@ It is designed for engineers and researchers who need a focused place to keep ma
 
 ## Requirements
 
-- macOS 15 or later
-- Xcode 16 or later
-- Apple Silicon or Intel Mac supported by the selected macOS SDK
+- macOS 26 or later
+- Xcode 27 or later
+- Mac supported by the selected macOS SDK
 
 ## Getting started
 
@@ -41,6 +42,18 @@ It is designed for engineers and researchers who need a focused place to keep ma
 4. Choose a Mac destination and run the application.
 
 The repository includes illustrative sample content so the workspace can be explored immediately. Treat sample information as demonstration content, not as engineering guidance or a substitute for qualified review.
+
+## Current verification
+
+The current Phase 5 implementation has passed the repository’s deterministic tests and a Release arm64 build. Ask uses local SQLite/FTS5 retrieval and only supplies Reviewed or Verified claims to the on-device model; it has no cloud fallback, network service, embeddings index, or third-party runtime. Actual Apple model generation and full visual/interactive GUI review remain dependent on the local Mac’s model availability and manual verification.
+
+To run the deterministic test suite from the repository root:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./Scripts/test.sh
+```
+
+For normal development, open `MaterialsIntelligence.xcodeproj` in Xcode and run the `MaterialsIntelligence` scheme on a Mac running macOS 26 or later.
 
 ## Project status
 

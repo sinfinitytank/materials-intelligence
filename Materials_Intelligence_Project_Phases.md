@@ -339,7 +339,7 @@ Only create directories/classes that are useful now. Avoid unnecessary placehold
 - Xcode project
 - Swift
 - SwiftUI
-- macOS target
+- macOS 26+ target; older macOS deployment compatibility is out of scope
 - Git
 - project documentation
 
@@ -354,7 +354,7 @@ It does not yet need useful engineering functionality.
 - project creation/configuration
 - application naming
 - bundle structure
-- deployment target
+- macOS 26 deployment target for all configurations
 - SwiftUI entry point
 - basic placeholder root view if required
 - project folders/groups

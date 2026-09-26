@@ -62,7 +62,7 @@ Reuse `KnowledgeStore.search` for candidate retrieval and resolve candidates to 
 
 ## 2026-09-27 — Guarded Apple on-device provider
 
-Use a small `LocalAIProvider` boundary with one `AppleLocalProvider` implementation. The installed Xcode 27 SDK exposes `SystemLanguageModel.default` and `LanguageModelSession` on macOS 26+, while the app's deployment target remains macOS 15. Guard runtime access and show an unavailable state when the local model is absent or unready; never fall back to cloud inference. The development Mac reported `modelNotReady`, so actual model generation remains unverified.
+Use a small `LocalAIProvider` boundary with one `AppleLocalProvider` implementation. The app now requires macOS 26+, matching the Xcode 27 SDK APIs for `SystemLanguageModel.default` and `LanguageModelSession`; no older deployment compatibility or availability guards are retained. Show an unavailable state when the local model is absent or unready, and never fall back to cloud inference. The development Mac reported `modelNotReady`, so actual model generation remains unverified.
 
 ## 2026-09-27 — Phase 6 staged snapshots and identity reuse
 

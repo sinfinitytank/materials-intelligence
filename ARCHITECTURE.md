@@ -1,6 +1,6 @@
 # Architecture
 
-Materials Intelligence is a native SwiftUI macOS 15+ application with one Xcode app target and no third-party runtime. `App` opens the local database, `UI` reads and writes through `KnowledgeStore`, `Domain` holds value models, `Database` owns SQLite statements and migration, and `AI` owns local question answering. No mobile target is implemented.
+Materials Intelligence is a native SwiftUI macOS 26+ application with one Xcode app target and no third-party runtime. `App` opens the local database, `UI` reads and writes through `KnowledgeStore`, `Domain` holds value models, `Database` owns SQLite statements and migration, and `AI` owns local question answering. No mobile target is implemented.
 
 ## Domain and storage
 
@@ -26,7 +26,7 @@ Search turns Unicode letter/number runs into quoted prefix tokens with the `*` o
 
 Ask calls `LocalRAG`, which uses the existing `KnowledgeStore.search` FTS5 path and resolves claim hits and linked record hits to stored `EngineeringClaim`, subject, and source records. Archived and superseded claims are excluded. Only Reviewed or Verified claims enter the model context; Draft and Unverified matches remain visible as evidence gaps. The context builder limits candidates to six claims, clips field lengths, and caps the prompt at 7,000 characters. It supplies exact claim IDs, verification states, source names, and locators. Library metadata may affect FTS ranking, but PDF/document content is never supplied as evidence.
 
-`LocalAIProvider` isolates generation; the sole implementation is `AppleLocalProvider`, using `SystemLanguageModel.default` and `LanguageModelSession` on macOS 26+ when the on-device model reports available. macOS 15–25 and unsupported or unready Apple Intelligence runtimes show a clear unavailable state. No cloud fallback, key, network request, embedding index, or second search store exists.
+`LocalAIProvider` isolates generation; the sole implementation is `AppleLocalProvider`, using `SystemLanguageModel.default` and `LanguageModelSession` when the on-device model reports available. Unsupported or unready Apple Intelligence runtimes show a clear unavailable state. No cloud fallback, key, network request, embedding index, or second search store exists.
 
 The model is instructed to return JSON answer points with stored claim IDs. `LocalRAG` rejects malformed responses, unknown IDs, points without citations, and excessive output. The UI maps accepted IDs back to records from the same retrieval, shows generated explanation separately from supporting claims and sources, displays verification states, and opens stored claim/source records. Citation IDs are structurally validated; semantic support still requires human engineering review. When evidence is absent or only unreviewed, Ask refuses before generation. If generation cannot produce a traceable answer, Ask shows retrieved evidence without a generated conclusion. Retrieved strings and the question are labelled untrusted; the trusted provider instruction prohibits following directions inside them.
 
