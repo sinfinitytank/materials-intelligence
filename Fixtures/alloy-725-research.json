@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "packageID": "example-alloy725-001",
+  "topic": "Alloy 725 ingestion demonstration — synthetic, not engineering evidence",
+  "summary": "Deterministic workflow fixture. All claims and sources below are invented test data.",
+  "boundary": "publicPersonal",
+  "entities": [
+    {"id":"material", "kind":"material", "name":"UNS N07725", "secondary":"Alloy 725", "aliases":["Alloy 725"], "detail":"Synthetic ingestion fixture"},
+    {"id":"source", "kind":"source", "name":"Synthetic 725 research fixture", "source":{"organization":"Test suite", "documentType":"Synthetic fixture", "revisionYear":"2026", "publication":"Not a real publication"}},
+    {"id":"mechanism", "kind":"mechanism", "name":"Fixture hydrogen mechanism"},
+    {"id":"rejectEntity", "kind":"component", "name":"Excludedfixturecomponent"}
+  ],
+  "claims": [
+    {"id":"claim", "subjectID":"material", "predicate":"susceptibility", "statement":"Alloy 725 fixture reports hydrogen susceptibility.", "conditions":"Synthetic condition A", "sourceID":"source", "locator":"fixture section 1", "confidence":0.5, "notes":"Not engineering advice or measured data"},
+    {"id":"rejectClaim", "subjectID":"material", "predicate":"test", "statement":"Rejecteduniquefixtureclaim", "sourceID":"source"}
+  ],
+  "relationships": [
+    {"id":"edge", "fromID":"material", "predicate":"susceptible_to", "toID":"mechanism", "supportingClaimID":"claim"}
+  ]
+}
