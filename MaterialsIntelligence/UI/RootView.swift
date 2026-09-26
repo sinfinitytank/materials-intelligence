@@ -56,8 +56,8 @@ private struct SearchPage: View {
     @State private var results:[SearchResult] = []
     @State private var error = ""
     var body: some View { VStack(alignment:.leading, spacing:14) {
-        Text("Search").font(.largeTitle.bold())
-        HStack { TextField("Search local knowledge", text:$query).textFieldStyle(.roundedBorder).onSubmit(search); Button("Search", action:search).keyboardShortcut(.return, modifiers:[]) }
+        PageHeader(title: "Search", subtitle: "Find materials, claims, standards, and local documents.")
+        HStack { Image(systemName: "magnifyingglass").foregroundStyle(.secondary); TextField("Search local knowledge…", text:$query).textFieldStyle(.plain).onSubmit(search); if !query.isEmpty { Button("Clear", systemImage: "xmark.circle.fill") { query = ""; results = [] }.buttonStyle(.plain).foregroundStyle(.secondary) }; Button("Search", action:search).buttonStyle(.borderedProminent).keyboardShortcut(.return, modifiers:[]) }.padding(10).background(.background, in: RoundedRectangle(cornerRadius: 9)).overlay(RoundedRectangle(cornerRadius: 9).stroke(.quaternary))
         filters
         if !error.isEmpty { Text(error).foregroundStyle(.red) }
         if query.isEmpty { ContentUnavailableView("Search your local engineering knowledge", systemImage:"magnifyingglass", description:Text("Results rank full-text and prefix matches across records, claims, and Library metadata.")) } else { List(results) { result in Button { openResult(result) } label: { VStack(alignment:.leading,spacing:4) { HStack { Text(result.title).font(.headline); Spacer(); Text(result.entityType.title).font(.caption).padding(4).background(.quaternary, in:Capsule()) }; HighlightedText(text:result.detail, query:query).foregroundStyle(.secondary); Text(result.kind.replacingOccurrences(of:"_",with:" ")).font(.caption).foregroundStyle(.tertiary) }.padding(.vertical,3).frame(maxWidth:.infinity,alignment:.leading) }.buttonStyle(.plain).accessibilityLabel("Open \(result.entityType.title): \(result.title)") }.overlay { if results.isEmpty && error.isEmpty { ContentUnavailableView("No local matches", systemImage:"magnifyingglass") } } }
@@ -82,13 +82,13 @@ private struct LibraryPage: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            List(documents, selection: $selected) { document in
+            VStack(alignment: .leading, spacing: 10) { Text("Library").font(.title2.bold()); Text("Local documents and source files").font(.caption).foregroundStyle(.secondary); List(documents, selection: $selected) { document in
                 VStack(alignment: .leading) {
-                    Text(document.title)
+                    Label(document.title, systemImage: "doc.text").lineLimit(1)
                     Text([document.organization, document.revisionYear].filter { !$0.isEmpty }.joined(separator: " · "))
                         .font(.caption).foregroundStyle(.secondary)
                 }.tag(document)
-            }.frame(minWidth: 240, idealWidth: 320)
+            } }.padding(.top, 18).frame(minWidth: 250, idealWidth: 320)
             Divider()
             if let selected {
                 DocumentDetail(document: selected, store: store, changed: load, message: $message)
@@ -129,21 +129,14 @@ private struct DocumentDetail: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text(document.title).font(.largeTitle.bold())
+                    VStack(alignment: .leading, spacing: 4) { Text(document.title).font(.system(size: 28, weight: .bold, design: .rounded)); Text("Library document").font(.subheadline).foregroundStyle(.secondary) }
                     Spacer()
-                    Button("Open", action: open)
+                    Button("Open document", action: open).buttonStyle(.borderedProminent)
                     Button("Locate file…", action: locate)
                     Button("Edit metadata") { editing = true }
                 }
-                if !document.organization.isEmpty { LabeledContent("Organization", value: document.organization) }
-                if !document.revisionYear.isEmpty { LabeledContent("Revision / year", value: document.revisionYear) }
-                if !document.sourceType.isEmpty { LabeledContent("Source type", value: document.sourceType) }
-                Text(document.notes.isEmpty ? "No notes recorded." : document.notes)
-                Divider()
-                Text("Associated knowledge").font(.title2.bold())
-                ForEach((try? store.recordIDs(documentID: document.id)) ?? [], id: \.self) { id in
-                    Text((try? store.record(id: id))?.name ?? "Unavailable record")
-                }
+                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Document details", icon: "info.circle"); if !document.organization.isEmpty { LabeledContent("Organization", value: document.organization) }; if !document.revisionYear.isEmpty { LabeledContent("Revision / year", value: document.revisionYear) }; if !document.sourceType.isEmpty { LabeledContent("Source type", value: document.sourceType) }; LabeledContent("File", value: document.fileName.isEmpty ? "Not linked" : document.fileName); Text(document.notes.isEmpty ? "No notes recorded." : document.notes).foregroundStyle(.secondary) } }
+                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Associated knowledge", icon: "link"); ForEach((try? store.recordIDs(documentID: document.id)) ?? [], id: \.self) { id in Label((try? store.record(id: id))?.name ?? "Unavailable record", systemImage: "cube") } } }
                 Button("Remove from Library", role: .destructive) { confirmRemoval = true }
             }
             .frame(maxWidth: .infinity, alignment: .leading).padding(28)
@@ -352,27 +345,20 @@ private struct RecordDetail: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text(record.name).font(.largeTitle.bold())
+                    VStack(alignment: .leading, spacing: 5) { Text(record.name).font(.system(size: 30, weight: .bold, design: .rounded)); Text(record.kind.rawValue.capitalized).font(.subheadline).foregroundStyle(.secondary) }
                     Spacer()
-                    Button("Edit", action: edit)
+                    Button("Edit", action: edit).buttonStyle(.borderedProminent)
                     Button("Delete", role: .destructive, action: delete)
                 }
-                Text(record.secondary).font(.headline)
-                Text(record.detail.isEmpty ? "No detail recorded." : record.detail)
-                Divider()
-                Text("Claims").font(.title2.bold())
-                ForEach((try? store.claims(subjectID: record.id)) ?? []) { claim in
-                    Text("\(claim.status.title): \(claim.statement)")
-                }
-                Text("Relationships").font(.title2.bold())
-                ForEach((try? store.relationships(recordID: record.id)) ?? []) { relationship in
-                    let id = relationship.fromID == record.id ? relationship.toID : relationship.fromID
-                    Text("\(relationship.predicate.replacingOccurrences(of: "_", with: " ")) → \((try? store.record(id: id))?.name ?? "Unknown")")
-                }
+                HStack(spacing: 8) { if !record.secondary.isEmpty { Text(record.secondary).font(.subheadline).padding(.horizontal, 10).padding(.vertical, 5).background(.blue.opacity(0.12), in: Capsule()) }; Text("Local record").font(.subheadline).foregroundStyle(.secondary) }
+                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Profile", icon: "cube"); Text(record.detail.isEmpty ? "No detail recorded." : record.detail).foregroundStyle(.secondary) } }
+                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Claims & evidence", icon: "checkmark.seal"); ForEach((try? store.claims(subjectID: record.id)) ?? []) { claim in HStack(alignment: .top) { Image(systemName: "doc.text").foregroundStyle(.blue); VStack(alignment: .leading, spacing: 3) { Text(claim.statement); Text("\(claim.status.title) · \((try? store.record(id: claim.sourceID))?.name ?? "Unknown source")").font(.caption).foregroundStyle(.secondary) }; Spacer(); StatusBadge(title: claim.status.title, color: claim.status == .verified ? .green : .orange) } } } }
+                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Relationships", icon: "arrow.triangle.branch"); ForEach((try? store.relationships(recordID: record.id)) ?? []) { relationship in let id = relationship.fromID == record.id ? relationship.toID : relationship.fromID; Label { Text((try? store.record(id: id))?.name ?? "Unknown"); Text(relationship.predicate.replacingOccurrences(of: "_", with: " ")).font(.caption).foregroundStyle(.secondary) } icon: { Image(systemName: "link") } } } } }
             }.frame(maxWidth: .infinity, alignment: .leading).padding(28)
         }
     }
-}
+
+private struct StatusBadge: View { let title: String; let color: Color; var body: some View { Text(title).font(.caption.weight(.semibold)).foregroundStyle(color).padding(.horizontal, 8).padding(.vertical, 4).background(color.opacity(0.12), in: Capsule()) } }
 
 private struct RecordEditor: View {
     @Environment(\.dismiss) private var dismiss

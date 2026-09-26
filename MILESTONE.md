@@ -15,11 +15,13 @@ Phase 0–4 remediation and verification plus the focused UI/UX alignment pass. 
 - Added migration, FTS, rollback, lifecycle, and real bookmark regression coverage.
 - Updated architecture and status documentation to reflect verified behavior and manual limits.
 - Completed a presentation-only UI/UX alignment pass in `RootView.swift`: reference-led sidebar hierarchy, native material treatment, balanced window sizing, overview metric/panel composition, page headers, and shared panel primitives. No database, domain, search, bookmark, or engineering-data behavior was changed.
+- Completed the full visual GUI follow-up for the implemented Phase 0–4 surfaces: Search search-bar/filter treatment, Library navigator/detail panels, and record profile/evidence/relationship panels with status badges. Concept-only Phase 5 Ask/research-review behavior remains unimplemented.
 
 ## Build and test status — 2026-09-27
 
 - Xcode 27.0 / Swift 6.4 Debug arm64 build after UI pass: **PASS**.
 - Directly compiled `KnowledgeStoreTests` executable: **PASS**.
+- Full visual GUI follow-up Debug arm64 build: **PASS**.
 - Release app launched as a process for five seconds with no startup failure: **PASS**. This does not establish full GUI usability.
 - `PRAGMA foreign_key_check` on fresh, migrated, and reopened test databases: **PASS**.
 - Git checkpoint: see latest remediation commit.
