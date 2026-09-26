@@ -2,26 +2,25 @@
 
 ## Current milestone
 
-Phase 1 — Native Mac App Shell: complete.
+Phase 2 — Engineering Knowledge Model: complete.
 
 ## Completed
 
-- Created the native SwiftUI macOS Xcode project.
-- Added the minimal application entry point and foundation root view.
-- Added the permanent project instructions and architecture/roadmap/state records.
-- Verified a clean Release build.
-- Created a Git checkpoint.
-- Added a native `NavigationSplitView` application shell with all eight primary destinations.
-- Added reusable empty states, summary cards, toolbar actions, search placement, and basic Settings content.
+- Preserved native SwiftUI shell and added local SQLite persistence.
+- Added version 1 transactional schema, repository CRUD, stable IDs, uniqueness and foreign-key protection.
+- Added material, mechanism, standard, component, source, claim, and relationship value models.
+- Added illustrative Alloy 725 → Hydrogen Embrittlement → ISO 15156 data, a tubing link, and two unverified claims tied to a clearly marked sample source.
+- Added read-only lists and details showing claims, source labels, and relationships.
+- Added standalone repository tests and updated permanent documentation.
 
-## Build status
+## Build and test status
 
-Build verified with Xcode 27.0, Swift 6.4, macOS deployment target 15.0. Release `xcodebuild` succeeded for arm64.
+Release arm64 `xcodebuild` succeeded. Standalone repository test executable passed using Xcode Swift 6.4. Manual visual launch remains recommended.
 
-## Known limitations
+## Known limits
 
-Engineering data, persistence, search, AI, research ingestion, and knowledge graph functionality remain intentionally absent until later phases.
+The sample is not verified engineering knowledge. Generic record fields are deliberately narrow; richer typed engineering attributes need future migrations. No editor, ingestion, search, AI, graph explorer, or sync exists. The test harness is a directly compiled executable rather than an Xcode test target.
 
-## Recommended next action
+## Exact next action
 
-Manually launch the Release app and verify sidebar navigation, resizing, light/dark appearance, and keyboard selection. Then explicitly authorize Phase 2 — Engineering Knowledge Model.
+Manually inspect the app's record pages. After explicit Phase 3 authorization, design reviewed record editing and verification workflows using the Phase 2 schema, adding migrations only for justified new fields.

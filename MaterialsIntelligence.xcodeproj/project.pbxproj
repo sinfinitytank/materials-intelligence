@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* MaterialsIntelligenceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* MaterialsIntelligenceApp.swift */; };
 		A10000000000000000000002 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* RootView.swift */; };
+		A10000000000000000000003 /* Knowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013; };
+		A10000000000000000000004 /* KnowledgeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -16,6 +18,8 @@
 		A10000000000000000000011 /* MaterialsIntelligenceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialsIntelligenceApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000012 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A10000000000000000000020 /* MaterialsIntelligence */ = {isa = PBXFileReference; lastKnownFileType = folder; path = MaterialsIntelligence; sourceTree = "<group>"; };
+		A10000000000000000000013 /* Knowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Knowledge.swift; sourceTree = "<group>"; };
+		A10000000000000000000014 /* KnowledgeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -25,9 +29,11 @@
 /* Begin PBXGroup section */
 		A10000000000000000000040 = {isa = PBXGroup; children = ( A10000000000000000000041, A10000000000000000000020, A10000000000000000000042 ); sourceTree = "<group>"; };
 		A10000000000000000000041 /* Products */ = {isa = PBXGroup; children = ( A10000000000000000000010 ); name = Products; sourceTree = "<group>"; };
-		A10000000000000000000042 /* MaterialsIntelligence */ = {isa = PBXGroup; children = ( A10000000000000000000043, A10000000000000000000044 ); path = MaterialsIntelligence; sourceTree = "<group>"; };
+		A10000000000000000000042 /* MaterialsIntelligence */ = {isa = PBXGroup; children = ( A10000000000000000000043, A10000000000000000000044, A10000000000000000000045, A10000000000000000000046 ); path = MaterialsIntelligence; sourceTree = "<group>"; };
 		A10000000000000000000043 /* App */ = {isa = PBXGroup; children = ( A10000000000000000000011 ); path = App; sourceTree = "<group>"; };
 		A10000000000000000000044 /* UI */ = {isa = PBXGroup; children = ( A10000000000000000000012 ); path = UI; sourceTree = "<group>"; };
+		A10000000000000000000045 /* Domain */ = {isa = PBXGroup; children = ( A10000000000000000000013 ); path = Domain; sourceTree = "<group>"; };
+		A10000000000000000000046 /* Database */ = {isa = PBXGroup; children = ( A10000000000000000000014 ); path = Database; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -43,12 +49,12 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		A10000000000000000000031 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ( A10000000000000000000001, A10000000000000000000002 ); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000031 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ( A10000000000000000000001, A10000000000000000000002, A10000000000000000000003, A10000000000000000000004 ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		A10000000000000000000080 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CODE_SIGNING_ALLOWED = NO; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Materials Intelligence"; MACOSX_DEPLOYMENT_TARGET = 15.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.materialsintelligence.app; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = macosx; SWIFT_VERSION = 6.0; }; name = Debug; };
-		A10000000000000000000081 /* Release */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CODE_SIGNING_ALLOWED = NO; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Materials Intelligence"; MACOSX_DEPLOYMENT_TARGET = 15.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.materialsintelligence.app; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = macosx; SWIFT_VERSION = 6.0; }; name = Release; };
+		A10000000000000000000080 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CODE_SIGNING_ALLOWED = NO; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Materials Intelligence"; MACOSX_DEPLOYMENT_TARGET = 15.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.materialsintelligence.app; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = macosx; SWIFT_VERSION = 6.0; OTHER_LDFLAGS = ( "-lsqlite3" ); }; name = Debug; };
+		A10000000000000000000081 /* Release */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CODE_SIGNING_ALLOWED = NO; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Materials Intelligence"; MACOSX_DEPLOYMENT_TARGET = 15.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.materialsintelligence.app; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = macosx; SWIFT_VERSION = 6.0; OTHER_LDFLAGS = ( "-lsqlite3" ); }; name = Release; };
 		A10000000000000000000082 = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CODE_SIGNING_ALLOWED = NO; }; name = Debug; };
 		A10000000000000000000083 = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CODE_SIGNING_ALLOWED = NO; }; name = Release; };
 /* End XCBuildConfiguration section */

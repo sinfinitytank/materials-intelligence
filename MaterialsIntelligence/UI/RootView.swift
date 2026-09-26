@@ -13,14 +13,26 @@ enum AppSection: String, CaseIterable, Identifiable {
 
 struct RootView: View {
     @State private var selection: AppSection? = .overview
+    @State private var store: KnowledgeStore?
+    @State private var loadError: String?
     var body: some View {
         NavigationSplitView {
             Sidebar(selection: $selection)
         } detail: {
-            if let selection { SectionPage(section: selection) } else { ContentUnavailableView("Select a section", systemImage: "sidebar.left") }
+            if let selection { SectionPage(section: selection, store: store, loadError: loadError) } else { ContentUnavailableView("Select a section", systemImage: "sidebar.left") }
         }
         .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)
         .frame(minWidth: 900, minHeight: 560)
+        .task {
+            do { let opened = try KnowledgeStore(url: KnowledgeStore.applicationURL()); try opened.seedIfEmpty(); store = opened }
+            catch { loadError = error.localizedDescription }
+        }
+    }
+}
+
+private extension AppSection {
+    var recordKind: RecordKind? {
+        switch self { case .materials: .material; case .damageMechanisms: .mechanism; case .standards: .standard; case .components: .component; case .library: .source; default: nil }
     }
 }
 
@@ -45,8 +57,10 @@ private struct Sidebar: View {
 
 private struct SectionPage: View {
     let section: AppSection
+    let store: KnowledgeStore?
+    let loadError: String?
     var body: some View {
-        Group { if section == .overview { OverviewPage() } else if section == .settings { SettingsPage() } else { EmptySectionPage(section: section) } }
+        Group { if section == .overview { OverviewPage() } else if let kind = section.recordKind { KnowledgePage(kind: kind, store: store, loadError: loadError) } else if section == .settings { SettingsPage() } else { EmptySectionPage(section: section) } }
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
                     Button("Refresh", systemImage: "arrow.clockwise") {}.help("Refresh this view")
@@ -103,3 +117,58 @@ private struct EmptyStatePanel: View {
 }
 
 private enum DesignMetrics { static let pagePadding: CGFloat = 28; static let cardSpacing: CGFloat = 14; static let sectionSpacing: CGFloat = 28 }
+
+
+private struct KnowledgePage: View {
+    let kind: RecordKind
+    let store: KnowledgeStore?
+    let loadError: String?
+    @State private var selectedID: String?
+    private var records: [KnowledgeRecord] { (try? store?.records(kind: kind)) ?? [] }
+    var body: some View {
+        if let loadError { ContentUnavailableView("Database unavailable", systemImage: "externaldrive.badge.exclamationmark", description: Text(loadError)) }
+        else if store == nil { ProgressView("Opening local knowledge") }
+        else {
+            HStack(spacing: 0) {
+                List(records, selection: $selectedID) { record in
+                    VStack(alignment: .leading) { Text(record.name); if !record.secondary.isEmpty { Text(record.secondary).font(.caption).foregroundStyle(.secondary) } }.tag(record.id)
+                }.frame(minWidth: 250, idealWidth: 300)
+                Divider()
+                if let selectedID, let record = try? store?.record(id: selectedID) { KnowledgeDetail(record: record, store: store!) }
+                else { ContentUnavailableView("Select a record", systemImage: "doc.text") }
+            }
+        }
+    }
+}
+
+private struct KnowledgeDetail: View {
+    let record: KnowledgeRecord
+    let store: KnowledgeStore
+    var body: some View {
+        let claims = (try? store.claims(subjectID: record.id)) ?? []
+        let relationships = (try? store.relationships(recordID: record.id)) ?? []
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text(record.name).font(.largeTitle.bold())
+                Text(record.detail).foregroundStyle(.secondary)
+                if !record.secondary.isEmpty { Text(record.secondary) }
+                if !relationships.isEmpty {
+                    Text("Relationships").font(.title2.bold())
+                    ForEach(relationships) { link in
+                        let otherID = link.fromID == record.id ? link.toID : link.fromID
+                        if let other = try? store.record(id: otherID) { LabeledContent(link.predicate.replacingOccurrences(of: "_", with: " "), value: other.name) }
+                    }
+                }
+                if !claims.isEmpty {
+                    Text("Engineering claims").font(.title2.bold())
+                    ForEach(claims) { claim in
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(claim.statement)
+                            Text("\(claim.status.rawValue.capitalized) · Source: \((try? store.record(id: claim.sourceID))?.name ?? "Unknown")\(claim.locator.isEmpty ? "" : " · \(claim.locator)")").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(28)
+        }
+    }
+}
