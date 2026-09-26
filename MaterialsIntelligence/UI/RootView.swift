@@ -7,17 +7,45 @@ enum AppSection: String, CaseIterable, Identifiable { case overview, ask, search
 }
 
 struct RootView: View { @State private var selection: AppSection? = .overview; @State private var store: KnowledgeStore?; @State private var error: String?; @State private var refresh = UUID(); @State private var targetID: String?
- var body: some View { NavigationSplitView { List(AppSection.allCases, selection: $selection) { Label($0.title, systemImage: $0.symbol).tag(Optional($0)) }.navigationTitle("Materials Intelligence").listStyle(.sidebar) } detail: { if let selection { Page(section: selection, store: store, refresh: $refresh, targetID: $targetID, error: error, openResult: openResult) } }.frame(minWidth: 820, minHeight: 560).task { do { let s = try KnowledgeStore(url: try KnowledgeStore.applicationURL()); try s.seedIfEmpty(); store=s } catch let caught { error=caught.localizedDescription } } }
+ var body: some View { NavigationSplitView { Sidebar(selection: $selection) } detail: { if let selection { Page(section: selection, store: store, refresh: $refresh, targetID: $targetID, error: error, openResult: openResult) } }.navigationSplitViewStyle(.balanced).frame(minWidth: 1040, minHeight: 680).task { do { let s = try KnowledgeStore(url: try KnowledgeStore.applicationURL()); try s.seedIfEmpty(); store=s } catch let caught { error=caught.localizedDescription } } }
  private func openResult(_ result: SearchResult) { targetID=result.id; switch result.entityType { case .document: selection = .library; case .claim: selection = .claims; case .record: if let kind=RecordKind(rawValue:result.kind) { selection = AppSection.allCases.first { $0.kind == kind } } } }
+}
+private struct Sidebar: View { @Binding var selection: AppSection?
+ var body: some View { VStack(alignment: .leading, spacing: 0) {
+  HStack(spacing: 10) { Image(systemName: "cube.transparent").font(.title2).foregroundStyle(.blue); Text("Materials Intelligence").font(.headline) }.padding(.horizontal, 18).padding(.top, 22).padding(.bottom, 18)
+  List(selection: $selection) {
+   Section { nav(.overview); nav(.ask); nav(.search) }
+   Section("Knowledge") { nav(.materials); nav(.mechanisms); nav(.components); nav(.standards); nav(.sources) }
+   Section("Evidence") { nav(.library); nav(.claims); nav(.relationships) }
+   Section { nav(.settings) }
+  }.listStyle(.sidebar)
+  Spacer()
+  HStack(spacing: 8) { Image(systemName: "circle.fill").font(.caption).foregroundStyle(.green); VStack(alignment: .leading, spacing: 2) { Text("Local database").font(.caption.weight(.semibold)); Text("Offline · Indexed and ready").font(.caption2).foregroundStyle(.secondary) } }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12)).padding(12)
+ }.background(.regularMaterial) }
+ private func nav(_ section: AppSection) -> some View { Label(section.title, systemImage: section.symbol).tag(Optional(section)).padding(.vertical, 3) }
 }
 private extension AppSection { var symbol:String { switch self { case .overview:"house"; case .ask:"questionmark.bubble"; case .search:"magnifyingglass"; case .library:"books.vertical"; case .materials:"cube"; case .mechanisms:"exclamationmark.shield"; case .standards:"text.book.closed"; case .components:"gearshape"; case .sources:"doc.text"; case .claims:"checkmark.seal"; case .relationships:"link"; case .settings:"gear" } } }
 
 private struct Page: View { let section: AppSection; let store: KnowledgeStore?; @Binding var refresh: UUID; @Binding var targetID:String?; let error: String?; let openResult:(SearchResult)->Void
- var body: some View { Group { if let error { ContentUnavailableView("Database unavailable", systemImage:"externaldrive.badge.exclamationmark", description:Text(error)) } else if let store { if let kind=section.kind { RecordPage(kind:kind, store:store, refresh:$refresh, targetID:$targetID) } else if section == .search { SearchPage(store:store, openResult:openResult) } else if section == .library { LibraryPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .claims { ClaimsPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .relationships { RelationshipsPage(store:store, refresh:$refresh) } else if section == .ask { ContentUnavailableView("Ask", systemImage:"questionmark.bubble", description:Text("Local answering is planned for Phase 5. Search and review your sources in the meantime.")) } else if section == .settings { SettingsPage() } else { Overview(store:store) } } else { ProgressView("Opening local knowledge") } }.toolbar { Button("Refresh", systemImage:"arrow.clockwise") { refresh=UUID() } } }
+ var body: some View { Group { if let error { ContentUnavailableView("Database unavailable", systemImage:"externaldrive.badge.exclamationmark", description:Text(error)) } else if let store { if let kind=section.kind { RecordPage(kind:kind, store:store, refresh:$refresh, targetID:$targetID) } else if section == .search { SearchPage(store:store, openResult:openResult) } else if section == .library { LibraryPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .claims { ClaimsPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .relationships { RelationshipsPage(store:store, refresh:$refresh) } else if section == .ask { AskPlaceholder() } else if section == .settings { SettingsPage() } else { Overview(store:store) } } else { ProgressView("Opening local knowledge") } }.toolbar { Button("Refresh", systemImage:"arrow.clockwise") { refresh=UUID() } } }
 }
-private struct SettingsPage:View { var body:some View { Form { LabeledContent("Storage",value:"Local Application Support database"); LabeledContent("Search",value:"Offline SQLite FTS5"); Text("Documents remain at their original locations. Library keeps access bookmarks and metadata.").foregroundStyle(.secondary) }.padding(28).navigationTitle("Settings") } }
+private struct SettingsPage:View { var body:some View { VStack(alignment: .leading, spacing: 18) { PageHeader(title: "Settings", subtitle: "Local storage and application behavior"); Panel { VStack(alignment: .leading, spacing: 12) { LabeledContent("Storage",value:"Local Application Support database"); LabeledContent("Search",value:"Offline SQLite FTS5"); Divider(); Text("Documents remain at their original locations. Library keeps access bookmarks and metadata.").foregroundStyle(.secondary) } } }.padding(32).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(MITheme.canvas) } }
 
-private struct Overview: View { let store: KnowledgeStore; var body: some View { VStack(alignment:.leading,spacing:18) { Text("Knowledge workspace").font(.largeTitle.bold()); Text("Create structured records, preserve source traceability, and review claims locally.").foregroundStyle(.secondary); ForEach(RecordKind.allCases,id:\.self) { k in LabeledContent(k.rawValue.capitalized,value:"\((try? store.records(kind:k).count) ?? 0)") }; Text("Sample records are illustrative and unverified.").font(.caption).foregroundStyle(.secondary) }.frame(maxWidth:700,alignment:.leading).padding(32) } }
+private enum MITheme { static let canvas = Color(nsColor: .underPageBackgroundColor); static let blue = Color.accentColor }
+private struct Panel<Content: View>: View { @ViewBuilder let content: () -> Content; var body: some View { content().padding(18).background(.background, in: RoundedRectangle(cornerRadius: 12, style: .continuous)).overlay(RoundedRectangle(cornerRadius: 12).stroke(.quaternary)) } }
+private struct PageHeader: View { let title: String; let subtitle: String; var body: some View { VStack(alignment: .leading, spacing: 4) { Text(title).font(.system(size: 30, weight: .bold, design: .rounded)); Text(subtitle).foregroundStyle(.secondary) } } }
+private struct AskPlaceholder: View { var body: some View { VStack(alignment: .leading, spacing: 12) { PageHeader(title: "Ask", subtitle: "Evidence-grounded answers from your local materials knowledge base."); Panel { ContentUnavailableView("Local answering is planned for Phase 5", systemImage: "questionmark.bubble", description: Text("Search and review your sources in the meantime.")) }.frame(maxWidth: 720) }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(32).background(MITheme.canvas) } }
+
+private struct Overview: View { let store: KnowledgeStore
+ var body: some View { ScrollView { VStack(alignment: .leading, spacing: 20) { HStack(alignment: .bottom) { PageHeader(title: "Materials Intelligence", subtitle: "Local engineering knowledge base"); Spacer(); Text("Materials. Context. Confidence.\nFor a more reliable tomorrow.").font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.trailing) }
+  LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 14) { metric("Knowledge coverage", value: totalRecords, note: "records indexed", icon: "books.vertical"); metric("Engineering claims", value: claims, note: "source-traceable", icon: "checkmark.seal"); metric("Library activity", value: documents, note: "documents registered", icon: "doc.text") }
+  HStack(alignment: .top, spacing: 14) { Panel { VStack(alignment: .leading, spacing: 12) { SectionTitle("Knowledge coverage", icon: "chart.bar.xaxis"); ForEach(RecordKind.allCases, id: \.self) { k in HStack { Circle().fill(color(for: k)).frame(width: 8, height: 8); Text(k.rawValue.capitalized); Spacer(); Text("\((try? store.records(kind: k).count) ?? 0)").foregroundStyle(.secondary) } } } }.frame(maxWidth: .infinity); Panel { VStack(alignment: .leading, spacing: 12) { SectionTitle("Quick actions", icon: "bolt"); Text("Use the sidebar to browse materials, review claims, or search the complete local index.").foregroundStyle(.secondary); Text("Sample records are illustrative and unverified.").font(.caption).foregroundStyle(.secondary) } }.frame(maxWidth: .infinity) }
+ }.padding(32) }.background(MITheme.canvas) }
+ private var totalRecords: String { "\((try? store.records().count) ?? 0)" }; private var claims: String { "\((try? store.claims().count) ?? 0)" }; private var documents: String { "\((try? store.documents().count) ?? 0)" }
+ private func color(for kind: RecordKind) -> Color { switch kind { case .material: .blue; case .mechanism: .orange; case .standard: .purple; case .component: .green; case .source: .gray } }
+ private func metric(_ title: String, value: String, note: String, icon: String) -> some View { Panel { HStack(alignment: .top) { Image(systemName: icon).font(.title2).foregroundStyle(.blue); VStack(alignment: .leading, spacing: 5) { Text(title).font(.headline); Text(value).font(.system(size: 26, weight: .bold, design: .rounded)); Text(note).font(.caption).foregroundStyle(.secondary) } } } }
+}
+private struct SectionTitle: View { let title: String; let icon: String; init(_ title: String, icon: String) { self.title = title; self.icon = icon }; var body: some View { Label(title, systemImage: icon).font(.headline) } }
 
 private struct SearchPage: View {
     let store: KnowledgeStore; let openResult:(SearchResult)->Void
@@ -33,7 +61,7 @@ private struct SearchPage: View {
         filters
         if !error.isEmpty { Text(error).foregroundStyle(.red) }
         if query.isEmpty { ContentUnavailableView("Search your local engineering knowledge", systemImage:"magnifyingglass", description:Text("Results rank full-text and prefix matches across records, claims, and Library metadata.")) } else { List(results) { result in Button { openResult(result) } label: { VStack(alignment:.leading,spacing:4) { HStack { Text(result.title).font(.headline); Spacer(); Text(result.entityType.title).font(.caption).padding(4).background(.quaternary, in:Capsule()) }; HighlightedText(text:result.detail, query:query).foregroundStyle(.secondary); Text(result.kind.replacingOccurrences(of:"_",with:" ")).font(.caption).foregroundStyle(.tertiary) }.padding(.vertical,3).frame(maxWidth:.infinity,alignment:.leading) }.buttonStyle(.plain).accessibilityLabel("Open \(result.entityType.title): \(result.title)") }.overlay { if results.isEmpty && error.isEmpty { ContentUnavailableView("No local matches", systemImage:"magnifyingglass") } } }
-    }.padding(28).onChange(of: kind) { _,_ in search() }.onChange(of: status) { _,_ in search() }.onChange(of:selectedTypes) { _,_ in search() } }
+    }.padding(28).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(MITheme.canvas).onChange(of: kind) { _,_ in search() }.onChange(of: status) { _,_ in search() }.onChange(of:selectedTypes) { _,_ in search() } }
     private var filters: some View { HStack { Menu("Types") { ForEach(SearchEntityType.allCases) { type in Toggle(type.title, isOn: typeBinding(type)) } }; Picker("Record type",selection:$kind){ Text("All records").tag(RecordKind?.none); ForEach(RecordKind.allCases,id:\.self) { recordKind in Text(recordKind.rawValue.capitalized).tag(Optional(recordKind)) } }.frame(width:180); Picker("Claim state",selection:$status) { Text("All claim states").tag(VerificationStatus?.none); ForEach(VerificationStatus.allCases,id:\.self) { claimStatus in Text(claimStatus.title).tag(Optional(claimStatus)) } }.frame(width:190); Spacer(); Text("Offline FTS5").font(.caption).foregroundStyle(.secondary) } }
     private func typeBinding(_ type:SearchEntityType) -> Binding<Bool> { Binding(get:{selectedTypes.contains(type)},set:{ enabled in if enabled {selectedTypes.insert(type)} else {selectedTypes.remove(type)} }) }
     private func search() { do { results = try store.search(query, entityTypes:selectedTypes, recordKind:kind, verificationStatus:status); error="" } catch let caught { error=caught.localizedDescription; results=[] } }
@@ -76,7 +104,7 @@ private struct LibraryPage: View {
         } message: { Text(message) }
         .onAppear(perform: load)
         .onChange(of: refresh) { _, _ in load() }
-        .onChange(of: targetID) { _, _ in load() }
+        .onChange(of: targetID) { _, _ in load() }.background(MITheme.canvas)
     }
 
     private func load() {
@@ -302,7 +330,7 @@ private struct RecordPage: View {
         } message: { Text(alert) }
         .onAppear(perform: reload)
         .onChange(of: targetID) { _, _ in reload() }
-        .onChange(of: refresh) { _, _ in reload() }
+        .onChange(of: refresh) { _, _ in reload() }.background(MITheme.canvas)
     }
     private func reload() {
         if let targetID, let found = records.first(where: { $0.id == targetID }) { selected = found }
@@ -431,7 +459,7 @@ private struct ClaimsPage: View {
         .alert("Claim", isPresented: Binding(get: { !message.isEmpty }, set: { if !$0 { message = "" } })) { Button("OK") {} } message: { Text(message) }
         .onAppear(perform: reload)
         .onChange(of: refresh) { _, _ in reload() }
-        .onChange(of: targetID) { _, _ in reload() }
+        .onChange(of: targetID) { _, _ in reload() }.background(MITheme.canvas)
     }
     private func reload() {
         if let targetID, let found = claims.first(where: { $0.id == targetID }) { selected = found }

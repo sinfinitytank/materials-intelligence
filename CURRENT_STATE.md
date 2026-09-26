@@ -2,7 +2,7 @@
 
 ## Scope and build
 
-Phases 0–4 are implemented in a native SwiftUI macOS 15+ app. The sole Xcode target is `MaterialsIntelligence`; it uses system SQLite/FTS5 and AppKit file panels, with no web runtime, third-party dependency, AI, embeddings, document extraction, network service, or Phase 5 implementation. Xcode 27.0 / Swift 6.4 Release arm64 build and standalone repository tests passed on 2026-09-27. A five-second process launch of the Release app stayed alive without an initialization failure. Visual navigation, resizing, appearance, and full document open interaction still require human checks.
+Phases 0–4 are implemented in a native SwiftUI macOS 15+ app. The sole Xcode target is `MaterialsIntelligence`; it uses system SQLite/FTS5 and AppKit file panels, with no web runtime, third-party dependency, AI, embeddings, document extraction, network service, or Phase 5 implementation. Xcode 27.0 / Swift 6.4 Release arm64 build and standalone repository tests passed on 2026-09-27. A five-second process launch of the Release app stayed alive without an initialization failure. The presentation layer now includes a reference-led native shell with grouped sidebar navigation, local database status, balanced window sizing, overview metric panels, shared page headers/panel primitives, and a cool neutral canvas/material treatment. Visual navigation, resizing, appearance, and full document open interaction still require human checks.
 
 ## Structure and data
 
@@ -19,6 +19,10 @@ The UI can create/edit records and claims; existing claims can move among Draft,
 Search is offline FTS5 over record names/details with directly linked relationship and active-claim context, claims plus subject/source context, and document metadata. Queries split into Unicode letter/number tokens, escape them as quoted FTS5 prefix terms (`"hyd"*`), and join terms with OR. Results rank by SQLite BM25, then title, with type, record-kind, and claim-status filters. The representative `725 hydrogen H2S` query can surface linked standards and sources through that indexed context. Search results open the corresponding record, claim, or Library detail. Logical writes that include FTS or document associations use SQLite savepoints so failed writes roll back together, including relationship changes.
 
 Library stores metadata, associations, original filename, and a base64 security-scoped bookmark. It references the original file without copying or extracting it. Metadata and associations can be edited after registration. Opening resolves the bookmark, starts and stops security-scoped access, checks readability, and asks macOS to open it. A stale bookmark is refreshed when possible. The user can use “Locate file…” to replace a broken reference while preserving the same metadata and associations. A missing or inaccessible file never deletes stored knowledge.
+
+## UI/UX alignment pass
+
+The current native UI follows the repository reference images as closely as the existing Phase 0–4 surface allows: a translucent grouped sidebar, icon-led sections, compact native toolbar actions, a cool neutral canvas, bordered panels with restrained corner radii, rounded typography for major headings, and denser overview metrics. The pass is presentation-only and does not implement the future Ask/research-review functionality depicted in concept imagery.
 
 ## Verified and unverified
 

@@ -47,3 +47,7 @@ Keep the small explicit FTS5 rebuild strategy, but put each primary write, relat
 ## 2026-09-27 — Native recovery for referenced documents
 
 Continue storing references rather than copies. Resolve and scope access only while opening; refresh stale bookmarks where possible and expose “Locate file…” to replace a broken reference in place. Failed file access preserves metadata and associations. Real bookmark persistence/resolution has automated coverage; the final OS file-panel/open interaction requires manual verification.
+
+## 2026-09-27 — Reference-led native UI alignment
+
+Use a small set of SwiftUI presentation primitives—grouped sidebar navigation, page headers, bordered panels, and a neutral canvas/material treatment—to bring the working Phase 0–4 app toward the repository’s existing UI/UX references. Keep the implementation in the presentation layer and preserve native controls, existing routes, and all backend behavior. This avoids a visual rewrite of each screen and leaves future Phase 5 concepts as visual placeholders only.
