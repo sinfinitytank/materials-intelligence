@@ -29,7 +29,7 @@ struct EngineeringClaim: Identifiable, Equatable, Hashable, Sendable {
         self.id = id; self.subjectID = subjectID; self.predicate = predicate; self.statement = statement; self.conditions = conditions; self.sourceID = sourceID; self.locator = locator; self.status = status; self.evidenceLevel = evidenceLevel; self.notes = notes
     }
 }
-struct KnowledgeRelationship: Identifiable, Equatable, Sendable {
+struct KnowledgeRelationship: Identifiable, Equatable, Hashable, Sendable {
     let id: String
     var fromID: String
     var predicate: String
@@ -37,5 +37,34 @@ struct KnowledgeRelationship: Identifiable, Equatable, Sendable {
     var supportingClaimID: String?
     init(id: String = UUID().uuidString, fromID: String, predicate: String, toID: String, supportingClaimID: String? = nil) {
         self.id = id; self.fromID = fromID; self.predicate = predicate; self.toID = toID; self.supportingClaimID = supportingClaimID
+    }
+}
+
+enum SearchEntityType: String, CaseIterable, Identifiable, Sendable { case record, claim, document
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+}
+
+struct SearchResult: Identifiable, Equatable, Sendable {
+    let id: String
+    let entityType: SearchEntityType
+    let title: String
+    let detail: String
+    let kind: String
+    let score: Double
+}
+
+struct LibraryDocument: Identifiable, Equatable, Hashable, Sendable {
+    let id: String
+    var title: String
+    var organization: String
+    var revisionYear: String
+    var sourceType: String
+    var notes: String
+    var fileName: String
+    var bookmark: String
+    var addedAt: String
+    init(id: String = UUID().uuidString, title: String, organization: String = "", revisionYear: String = "", sourceType: String = "", notes: String = "", fileName: String = "", bookmark: String = "", addedAt: String = "") {
+        self.id = id; self.title = title; self.organization = organization; self.revisionYear = revisionYear; self.sourceType = sourceType; self.notes = notes; self.fileName = fileName; self.bookmark = bookmark; self.addedAt = addedAt
     }
 }

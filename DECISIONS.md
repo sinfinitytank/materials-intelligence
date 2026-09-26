@@ -31,3 +31,19 @@ Use system SQLite through a small Swift repository, with `PRAGMA user_version` a
 ## 2026-09-27 — Phase 3 lifecycle and safe deletion
 
 Use explicit claim states and keep record deletion restricted by SQLite foreign keys. Claims may be archived; records with live evidence or relationships remain until those references are intentionally removed. This is the smallest safe lifecycle compatible with the Phase 2 schema.
+
+## 2026-09-27 — Phase 4 FTS rebuild and referenced documents
+
+Use SQLite FTS5 with a compact denormalized index rebuilt after repository writes instead of partial hand-written index triggers. The local dataset is small, so this makes update/delete synchronization explicit and testable. Rank with BM25 and filter deterministically. Store document metadata and security-scoped bookmark references, not copied technical files; stale or missing files never delete engineering metadata or associations.
+
+## 2026-09-27 — Safe claim migration with dependent relationships
+
+The original version 1 → 2 migration dropped `claims` while `relationships.supporting_claim_id` could still reference it. SQLite `ON DELETE RESTRICT` correctly rejected that operation. Rebuild both tables in one transaction while foreign keys stay enabled: copy claims to the new schema, copy relationships referencing the replacement claim table, drop old relationships before old claims, rename replacements, recreate indexes/triggers, then run `foreign_key_check` before commit. This preserves IDs, provenance, and referential integrity.
+
+## 2026-09-27 — Atomic FTS writes and claim archive behavior
+
+Keep the small explicit FTS5 rebuild strategy, but put each primary write, relationship change, association update, and index rebuild in one SQLite savepoint. This prevents partial writes if indexing or association insertion fails, including inside seed transactions. Index directly linked record names and active-claim context with each record so a query can surface connected standards and sources. Parse search input to Unicode words and emit quoted FTS5 prefix tokens with `*` outside the quotes. Archived claims remain in the evidence database and leave the search index; they can be reviewed in Claims.
+
+## 2026-09-27 — Native recovery for referenced documents
+
+Continue storing references rather than copies. Resolve and scope access only while opening; refresh stale bookmarks where possible and expose “Locate file…” to replace a broken reference in place. Failed file access preserves metadata and associations. Real bookmark persistence/resolution has automated coverage; the final OS file-panel/open interaction requires manual verification.

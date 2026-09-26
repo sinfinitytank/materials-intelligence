@@ -2,27 +2,39 @@
 
 ## Current milestone
 
-Phase 3 — Knowledge Management: complete.
+Phase 0–4 remediation and verification, including completion of the existing uncommitted Phase 4 implementation. Phase 5 has not started.
 
 ## Completed
 
-- Preserved native SwiftUI shell and added local SQLite persistence.
-- Added version 1 transactional schema, repository CRUD, stable IDs, uniqueness and foreign-key protection.
-- Added material, mechanism, standard, component, source, claim, and relationship value models.
-- Added illustrative Alloy 725 → Hydrogen Embrittlement → ISO 15156 data, a tubing link, and two unverified claims tied to a clearly marked sample source.
-- Added read-only lists and details showing claims, source labels, and relationships.
-- Added standalone repository tests and updated permanent documentation.
-- Added native CRUD editors for records, source-linked claim review, relationship creation, and guarded deletion.
-- Added schema version 2 migration support for claim lifecycle states.
+- Preserved the native SwiftUI architecture and Phase 4 Search/Library work.
+- Added Ask and Settings to the established sidebar; Ask accurately identifies Phase 5 as future work.
+- Repaired version 1 → 2 migration by copying cited claims and dependent relationships before dropping old tables, without disabling foreign keys.
+- Added existing-claim editing and all established review states, optional supporting-claim selection, relationship removal, and confirmations for destructive UI actions.
+- Corrected FTS5 prefix syntax, safe tokenization, linked standard/source recall, archived-claim indexing, result navigation, and transaction boundaries around logical writes, including relationship changes.
+- Added Library metadata/association editing, file relinking, access/readability checks, and stale bookmark refresh while retaining stored knowledge.
+- Added migration, FTS, rollback, lifecycle, and real bookmark regression coverage.
+- Updated architecture and status documentation to reflect verified behavior and manual limits.
 
-## Build and test status
+## Build and test status — 2026-09-27
 
-Release arm64 `xcodebuild` succeeded. Standalone repository test executable passed using Xcode Swift 6.4. Manual visual launch and quit/relaunch exercise remain recommended.
+- Xcode 27.0 / Swift 6.4 Release arm64 build: **PASS**.
+- Directly compiled `KnowledgeStoreTests` executable: **PASS**.
+- Release app launched as a process for five seconds with no startup failure: **PASS**. This does not establish full GUI usability.
+- `PRAGMA foreign_key_check` on fresh, migrated, and reopened test databases: **PASS**.
+- Git checkpoint: see latest remediation commit.
+
+## Remaining manual verification
+
+1. Open the Release app, visit every sidebar destination, resize the window, switch macOS light/dark appearance, and use keyboard navigation and VoiceOver labels. Confirm no clipped or unreachable controls.
+2. In Library, register a real local file, associate it with a record, quit/relaunch, open it, move it, use “Locate file…” to repair the reference, and confirm its metadata and association remain. Repeat with an inaccessible file if available.
+3. Search `hyd` and `725 hydrogen H2S`; open a material, claim, and Library result and confirm each correct detail is selected.
+
+These checks are **UNVERIFIED** in this Codex environment. No automated test substitutes for macOS file-panel and visual interaction.
 
 ## Known limits
 
-The sample is not verified engineering knowledge. Generic record fields are deliberately narrow; richer typed attributes need future migrations. No ingestion, search, AI, graph explorer, or sync exists. The test harness is a directly compiled executable rather than an Xcode test target.
+The sample engineering data is illustrative. Search is lexical OR-prefix FTS5 rather than semantic retrieval; it searches document metadata, not document contents. The current record-kind and claim-state filters are broad; specialized material-family, standard-organization, tags, and date fields are not modeled yet. There is no Xcode test target; repository tests compile directly with `swiftc`. No AI, ingestion, graph explorer, or sync exists.
 
 ## Exact next action
 
-Manually exercise record creation, claim review, relationship editing, guarded deletion, and quit/relaunch persistence. Then begin Phase 4 only with explicit authorization.
+Complete the three manual GUI checks above. Start Phase 5 only after separate explicit authorization.
