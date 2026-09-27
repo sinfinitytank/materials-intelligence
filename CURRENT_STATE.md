@@ -24,4 +24,4 @@ Known functional scope limits: lexical/metadata search, narrative rather than ty
 
 ## Exact next action
 
-Complete the genuine account/device/GUI checks in `MOBILE_SYNC.md`, `ENGINEERING_AGENT.md` and earlier checkpoints before declaring the full product operationally verified. Review final audit findings before any corrective work. No development beyond Phase 10 is authorized. If allowance requires stopping, this state and phase guides are the continuation handoff.
+Final read-only audit reports ROADMAP NOT COMPLETE; see `FINAL_ROADMAP_AUDIT.md`. Review the sync timestamp-preservation defect before corrective work. Complete the genuine account/device/GUI checks in `MOBILE_SYNC.md`, `ENGINEERING_AGENT.md` and earlier checkpoints before declaring the full product operationally verified. Review final audit findings before any corrective work. No development beyond Phase 10 is authorized. If allowance requires stopping, this state and phase guides are the continuation handoff.
