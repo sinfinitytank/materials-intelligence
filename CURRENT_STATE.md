@@ -1,48 +1,32 @@
 # Current State
 
-## Scope and build
+## Scope
 
-Phases 0–4 are implemented in a native SwiftUI macOS 26+ app. The sole Xcode target is `MaterialsIntelligence`; it uses system SQLite/FTS5 and AppKit file panels, with no web runtime, third-party dependency, embeddings, document extraction, or network service. Phase 5 adds an Apple on-device model provider and local RAG pipeline. Xcode 27.0 / Swift 6.4 Release arm64 build and standalone repository tests passed on 2026-09-27. A five-second process launch of the Release app stayed alive without an initialization failure. The presentation layer now includes a reference-led native shell with grouped sidebar navigation, local database status, balanced window sizing, overview metric panels, shared page headers/panel primitives, and a cool neutral canvas/material treatment. Visual navigation, resizing, appearance, and full document open interaction still require human checks.
+Phases 0 through 6 are implemented in one native SwiftUI macOS 26+ target. The app uses system SQLite/FTS5, AppKit file panels, security-scoped bookmarks, and Apple Foundation Models when available. It has no web runtime, third-party dependency, cloud fallback, network research service, embeddings store, autonomous ingestion, graph explorer, sync, or Phase 7 functionality.
 
-## Structure and data
+The local database is `Application Support/MaterialsIntelligence/knowledge.sqlite`. Current schema version is 4: records/claims/relationships, claim lifecycle, Library/FTS, and research-session snapshots. Foreign keys are enabled on open. Version 1 and direct version 3 upgrades are regression-tested, preserve stable IDs and existing knowledge, and complete without foreign-key violations.
 
-- `App`: SwiftUI entry point and local database startup.
-- `UI`: `NavigationSplitView`, native record/claim/relationship authoring, Search, Library, local Ask, Settings.
-- `Domain`: stable-ID value models for records, claims, relationships, search results, and documents.
-- `Database`: SQLite connection, numbered migrations, foreign keys, repository methods, and local FTS5.
-- `AI`: existing-FTS retrieval, bounded context, citation validation, and on-device Apple provider.
-- `MaterialsIntelligenceTests`: directly compiled repository and RAG regression executables; there is no Xcode test target.
+## Implemented product
 
-The local file is `Application Support/MaterialsIntelligence/knowledge.sqlite`. Current schema version is 3. A version 1 database upgrades by copying claims and their dependent relationships into replacement tables in one transaction with foreign keys enabled, then advances through the version 3 document/search migration. The upgrade is tested with the original version 1 DDL, source, claim, and a relationship citing that claim, followed by reopening and `foreign_key_check`.
+- Native sidebar and pages for Overview, Ask, Search, Research, Library, Materials, Damage Mechanisms, Standards, Components, Sources, Claims, Relationships, and Settings.
+- Stable record, claim, relationship, and document identities with source linkage, six claim states, guarded deletion, and restart persistence.
+- Offline FTS5 over records, active claims, relationships, and document metadata; transactional rebuilds keep writes and indexes consistent.
+- Referenced local documents with persisted security-scoped bookmarks, associations, relinking, and missing-file preservation.
+- Local RAG over the existing FTS path. Only Reviewed or Verified claims enter model context; citations must resolve to retrieved claim IDs. Unverified imported claims appear as evidence gaps until reviewed.
+- Phase 6 JSON schema v1, strict validation, persisted staging, deterministic duplicate/conflict suggestions, accept/reject/edit/reuse/cancel/commit actions, atomic permanent writes, provenance, original/final package audit, result mappings, history, and native review UI.
 
-The UI can create/edit records and claims; existing claims can move among Draft, Unverified, Reviewed, Verified, Superseded, and Archived. Claim source and locator remain attached. Relationships can be created with an optional supporting claim and removed with confirmation. Deletion of records or claims that would orphan references is blocked with actionable UI text. Record, claim, and Library removal require confirmation. Archived claims remain stored and are omitted from FTS results.
+## Post-Phase-6 verification — 2026-09-27
 
-Search is offline FTS5 over record names/details with directly linked relationship and active-claim context, claims plus subject/source context, and document metadata. Queries split into Unicode letter/number tokens, escape them as quoted FTS5 prefix terms (`"hyd"*`), and join terms with OR. Results rank by SQLite BM25, then title, with type, record-kind, and claim-status filters. The representative `725 hydrogen H2S` query can surface linked standards and sources through that indexed context. Search results open the corresponding record, claim, or Library detail. Logical writes that include FTS or document associations use SQLite savepoints so failed writes roll back together, including relationship changes.
+`Scripts/test.sh` passes KnowledgeStore, LocalRAG, and ResearchIngestion suites. Coverage includes CRUD/integrity, schema 1 and schema 3 migrations, FTS update/delete/archive behavior, document association rollback, bookmark persistence, RAG evidence gating/citation validation/context bounds, malformed and invalid packages, invalid edit preservation, duplicate/conflict matching, partial approval, dependency failures, forced late rollback including FTS, cancellation, retry, stale sessions, provenance, audit reopen, imported search retrieval, and RAG use after explicit review.
 
-Library stores metadata, associations, original filename, and a base64 security-scoped bookmark. It references the original file without copying or extracting it. Metadata and associations can be edited after registration. Opening resolves the bookmark, starts and stops security-scoped access, checks readability, and asks macOS to open it. A stale bookmark is refreshed when possible. The user can use “Locate file…” to replace a broken reference while preserving the same metadata and associations. A missing or inaccessible file never deletes stored knowledge.
+A clean Release arm64 `xcodebuild clean build` from a fresh derived-data directory passes with Xcode 27.0 / Swift 6.4. The built executable remained alive during a five-second launch check with no application initialization failure. The audit restored working add/edit/delete controls on the specialized Materials screen and removed duplicate source rows from the Research Entities section.
 
-## UI/UX alignment pass
+## Verification boundary and known limits
 
-The current native UI follows the repository reference images as closely as the existing Phase 0–4 surface allows: a translucent grouped sidebar, icon-led sections, compact native toolbar actions, a cool neutral canvas, bordered panels with restrained corner radii, rounded typography for major headings, overview metrics, a sketch-style Search bar/filter row, a Library navigator/detail split, and record profile/evidence/relationship panels. Sidebar, overview coverage/quick-action controls, and Materials, Claims, and Library browser rows use explicit clickable native buttons with selected/pressed states. The pass does not implement the future Ask/research-review functionality depicted in concept imagery.
+Automated tests and process launch do not establish visual correctness or complete human interaction. Still manual: visit every screen; resize; check light/dark mode, keyboard use and VoiceOver; exercise the macOS import/export/file panels; complete import → review → edit/reuse/reject → commit/cancel → Search → Claims review → Ask; and verify a real on-device generated answer. The current Mac previously reported the Apple model as `modelNotReady`, so deterministic provider tests—not a real model response—verify RAG integration.
 
-## Verified and unverified
-
-The regression executable covers fresh initialization, exact/prefix/multiple-term search, the `725 hydrogen H2S` query, arbitrary punctuation, reindex on update/delete/archive, foreign keys, claim lifecycle persistence, relationship restriction/removal, document associations, transactional rollback, real bookmark creation/resolution after database reopen, and moved-file metadata retention. Actual GUI file selection, opening through `NSWorkspace`, sandbox permission behavior across a real app restart, stale bookmark refresh, window resizing, dark/light rendering, and keyboard/accessibility use are **UNVERIFIED** pending manual inspection.
-
-The seed data is illustrative and unverified engineering knowledge. Phase 5 code is implemented; real-model and visual GUI verification remain outstanding.
+Search remains lexical OR-prefix FTS over structured text and document metadata, not document contents or semantic embeddings. Matching is deliberately conservative and deterministic; it does not infer numeric or semantic contradictions. Research boundary labels are provenance, not row-level authorization. Audit stores original and final snapshots, not every intermediate event. Research editing assumes the app's single-store serial UI workflow; stale revisions prevent lost updates, while multi-process collaborative review is unsupported.
 
 ## Exact next action
 
-On an eligible Mac with the on-device Apple model ready, store a genuine Reviewed or Verified Alloy 725 claim with source and locator; ask the representative question offline; inspect the answer, claim/source navigation, and Ask layout. Also run the outstanding Phase 0–4 GUI checks in `MILESTONE.md`.
-
-## Phase 5 verification — 2026-09-27
-
-Debug and Release arm64 app builds, existing `KnowledgeStoreTests`, and deterministic `LocalRAGTests` pass. The RAG tests cover a known fixture answer, no evidence, unverified evidence, claim/source ID mapping, invalid citations, unavailable model handling, context limits, and stored instruction strings. The app launched as a process. On this Mac, `SystemLanguageModel.default.availability` returned `modelNotReady`, so actual local-model generation is **UNVERIFIED**. `screencapture` returned “could not create image from display” and System Events denied assistive access, so Ask visual and interactive inspection is **UNVERIFIED**. A disconnected-network GUI run is **UNVERIFIED**; the implementation contains no network path or cloud fallback. Claim-ID validation does not prove semantic faithfulness of model prose; a reviewer must check the answer against opened claims and sources.
-
-## Phase 6 backend checkpoint — 2026-09-27 (supersedes next action above)
-
-Phase 6 is **INCOMPLETE**. Research schema v1, local parser/validation, persisted staging/audit snapshots, deterministic matching/conflict suggestions, per-item decision/edit/cancel APIs, and atomic approved commits are implemented. Database schema is now **4**. Existing source records/claims/relationships, FTS and RAG remain authoritative. New imported claims are always Unverified. No Research UI exists yet; the backend cannot be exercised through the app.
-
-`Scripts/test.sh` passes all three suites: KnowledgeStore, LocalRAG and ResearchIngestion. A Release app build passes. Synthetic ingestion tests verify rollback, provenance, explicit reuse, rejection, cancellation, search and stored RAG citations after explicit claim review. Actual UI ingestion and on-device answers are **UNVERIFIED**.
-
-Exact next task: implement the native Research import/session/proposal-review/history UI over the existing backend, then perform full real-app acceptance and targeted corrections. See `RESEARCH_INGESTION.md` for the schema, policies, test coverage and remaining cases. The user-requested allowance protection caused a backend checkpoint before starting this major UI unit. Phase 7 is not started and is not ready. Pre-existing UI/documentation edits and Xcode user data remain outside this checkpoint.
+Perform the remaining manual GUI and eligible-device model checks listed in `PHASE_6_CHECKPOINT.md`. The repository is technically ready for Phase 7 based on build, migration, integrity, search, RAG, and ingestion evidence, but Phase 7 must not begin without an explicit request.

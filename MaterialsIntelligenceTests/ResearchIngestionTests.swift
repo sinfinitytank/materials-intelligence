@@ -44,6 +44,8 @@ private struct IngestionProvider: LocalAIProvider {
         try store.save(source)
         let existing = EngineeringClaim(subjectID: material.id, predicate: "susceptibility", statement: "Synthetic opposing hydrogen statement.", conditions: "Synthetic condition A", sourceID: source.id, locator: "fixture section 1", status: .verified)
         try store.save(existing)
+        try fails("invalid import is not staged") { _ = try store.importResearch(Data("{".utf8)) }
+        try check(try store.researchSessions().isEmpty && store.records().count == 2 && store.claims().count == 1, "invalid import cannot change staging or knowledge")
         var session = try store.importResearch(data)
         try check(try store.search("Excludedfixturecomponent").isEmpty, "staging absent from FTS")
         try check(try store.researchMatches(package, itemID: "material").first?.id == material.id, "designation entity matching")
@@ -53,6 +55,11 @@ private struct IngestionProvider: LocalAIProvider {
         try fails("missing dependency") { _ = try store.commitResearch(session) }
         try check(try store.claims().count == 1 && store.records().count == 2, "failed commit rollback")
         try check(try store.researchSessions().first?.lastError != nil, "failed attempt audit")
+        let failedSnapshot = try store.researchSessions().first { $0.id == session.id }!
+        var invalidEdit = package; invalidEdit.schemaVersion = 2
+        try fails("invalid edit") { _ = try store.editResearch(failedSnapshot, data: JSONEncoder().encode(invalidEdit)) }
+        let unchangedAfterInvalidEdit = try store.researchSessions().first { $0.id == session.id }!
+        try check(unchangedAfterInvalidEdit.revision == failedSnapshot.revision && unchangedAfterInvalidEdit.package == failedSnapshot.package && unchangedAfterInvalidEdit.reviews == failedSnapshot.reviews, "invalid edit preserves staged snapshot")
         var edited = package; edited.claims[0].notes = "Edited locally before approval"
         session = try store.editResearch(session, data: JSONEncoder().encode(edited))
         try check(session.reviews.isEmpty, "editing clears approvals")
@@ -96,6 +103,21 @@ private struct IngestionProvider: LocalAIProvider {
         let reopened = try KnowledgeStore(url: url)
         try check(try reopened.researchSessions().count == 3, "audit persists")
         try check(try reopened.researchSessions().contains { $0.id == session.id && $0.originalJSON == String(decoding: data, as: UTF8.self) && $0.results["claim"] == importedID }, "original package and mapping retained")
+        var restricted = package
+        restricted.packageID = "restricted-fixture"
+        restricted.boundary = "restricted"
+        let restrictedSession = try store.importResearch(JSONEncoder().encode(restricted))
+        try check(try store.researchSessions().first?.package.boundary == "restricted", "restricted label persists in staging")
+        let stale = restrictedSession
+        _ = try store.decideResearch(restrictedSession, itemID: "material", decision: .reject)
+        try fails("stale review") { _ = try store.decideResearch(stale, itemID: "source", decision: .reject) }
+        var revisedSource = package
+        revisedSource.entities[1].source?.revisionYear = "synthetic later revision"
+        try check(try store.researchMatches(revisedSource, itemID: "source").allSatisfy { !$0.canMerge }, "source revision cannot silently reuse identity")
+        var changedConditions = package
+        changedConditions.claims[0].conditions = "Synthetic condition B"
+        try check(try store.researchMatches(changedConditions, itemID: "claim").allSatisfy { !$0.canMerge }, "changed conditions cannot reuse claim")
+        try check(try store.researchMatches(package, itemID: "edge").contains { $0.canMerge }, "identical relationship can reuse identity")
         print("Research ingestion deterministic tests passed")
     }
 }

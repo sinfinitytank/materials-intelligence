@@ -67,3 +67,11 @@ Use a small `LocalAIProvider` boundary with one `AppleLocalProvider` implementat
 ## 2026-09-27 — Phase 6 staged snapshots and identity reuse
 
 Use versioned JSON interchange and a schema-4 staging/audit table in the existing SQLite database. Keep original packages and final review snapshots; avoid a second knowledge store or event-sourcing framework. Deterministic matching offers candidates; explicit merge means reuse identity without overwriting stored engineering fields. Source revisions with differing metadata remain separate; claim reuse requires identical evidence/context. Commit repository writes, indexes and audit atomically. Imported claims remain Unverified and require the existing Claims lifecycle review before generated RAG answers. Native review UI remains the next unit; this backend checkpoint is not Phase 6 completion. No architectural replacement or Phase 7 feature was introduced.
+
+## 2026-09-27 — Native Phase 6 Research review surface
+
+Implement the research import/review workflow as a dedicated SwiftUI navigation section over the existing staged-session APIs. Keep proposals separate from committed knowledge, require explicit accept/reject/merge decisions, preserve original JSON for audit, and show session history.
+
+## 2026-09-27 — Post-Phase-6 consolidation
+
+Retain the Phase 2–6 architecture after audit: one SQLite store, deterministic FTS5 retrieval, staged research snapshots, and the existing claim-review gate remain appropriate and no replacement is justified. Restore material add/edit/delete actions that were lost in the specialized material-profile presentation, keep sources in one Research review section, and add direct schema-3 migration plus invalid-import/edit regressions. No Phase 7 behavior is introduced.

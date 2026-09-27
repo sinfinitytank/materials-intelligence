@@ -64,6 +64,22 @@ import SQLite3
         try check(try reopened.claim(id: "c")?.status == .verified, "claim lifecycle persisted")
         try check(try reopened.relationships().first?.supportingClaimID == "c", "reopened relationship")
     }
+    static func phaseFiveToSixMigration() throws {
+        let url = temporaryURL(); defer { try? FileManager.default.removeItem(at: url) }
+        do {
+            let store = try KnowledgeStore(url: url)
+            try store.save(KnowledgeRecord(id: "phase5-material", kind: .material, name: "Phase 5 retained material"))
+        }
+        try withRawDatabase(url) { db in
+            try sql(db, "DROP TABLE research_sessions")
+            try sql(db, "PRAGMA user_version=3")
+        }
+        let migrated = try KnowledgeStore(url: url)
+        try check(try migrated.schemaVersion() == 4, "phase 5 database advances to schema 4")
+        try check(try migrated.record(id: "phase5-material")?.name == "Phase 5 retained material", "phase 5 knowledge survives schema 4 migration")
+        try check(try migrated.researchSessions().isEmpty, "schema 4 staging starts empty")
+        try check(try migrated.foreignKeyViolations() == 0, "phase 5 to 6 migration foreign keys")
+    }
     static func repositoryAndSearch() throws {
         let url = temporaryURL(); defer { try? FileManager.default.removeItem(at: url) }
         do {
@@ -185,6 +201,7 @@ import SQLite3
     }
     static func main() throws {
         try migration()
+        try phaseFiveToSixMigration()
         try repositoryAndSearch()
         try atomicSearchFailure()
         try realBookmarkPersistence()

@@ -17,6 +17,7 @@ It is designed for engineers and researchers who need a focused place to keep ma
 - Review-oriented workflows that help distinguish established information from work in progress
 - Privacy-conscious, local-first design for research conducted on the desktop
 - Guarded local retrieval-augmented Ask workflow using Apple’s on-device model when available
+- Reviewed JSON research ingestion with persistent staging, duplicate/conflict suggestions, atomic commit, and audit history
 
 ## Screenshots
 
@@ -45,7 +46,7 @@ The repository includes illustrative sample content so the workspace can be expl
 
 ## Current verification
 
-The current Phase 5 implementation has passed the repository’s deterministic tests and a Release arm64 build. Ask uses local SQLite/FTS5 retrieval and only supplies Reviewed or Verified claims to the on-device model; it has no cloud fallback, network service, embeddings index, or third-party runtime. Actual Apple model generation and full visual/interactive GUI review remain dependent on the local Mac’s model availability and manual verification.
+The implementation through Phase 6 has passed the repository’s deterministic tests, a clean Release arm64 build, and a process launch check. Research packages remain staged until explicit review and an atomic commit; new claims enter as Unverified. Ask uses local SQLite/FTS5 retrieval and only supplies Reviewed or Verified claims to the on-device model. There is no cloud fallback, network service, embeddings index, or third-party runtime. Actual Apple model generation and full visual/interactive GUI review remain dependent on the local Mac’s model availability and manual verification.
 
 To run the deterministic test suite from the repository root:
 

@@ -1,23 +1,20 @@
 # Roadmap
 
-Current work: **Phase 5 implementation build and deterministic tests pass; actual on-device model and GUI verification remain.**
+Current work: **Post-Phase-6 verification complete. Phase 7 has not started.**
 
 Platform baseline: macOS 26 or later. The project does not preserve compatibility with earlier macOS releases.
 
 | Phase | Status |
 |---|---|
-| 0 — Project Foundation | Complete; GUI launch appearance check pending |
-| 1 — Native Mac App Shell | Complete; manual resizing/appearance/accessibility check pending |
-| 2 — Engineering Knowledge Model | Complete; migration and integrity regression verified |
-| 3 — Knowledge Management | Complete; manual workflow check pending |
-| 4 — Local Search & Document Library | Complete with manual macOS file/open checks pending |
-| 5 — Local AI and RAG | Implemented; real-model and GUI acceptance checks remain |
-| 6–10 | Planned; none implemented |
+| 0 — Project Foundation | Complete; clean build and process launch verified |
+| 1 — Native Mac App Shell | Complete; manual resizing/appearance/accessibility check remains |
+| 2 — Engineering Knowledge Model | Complete; schema 1 and schema 3 migration/integrity regressions pass |
+| 3 — Knowledge Management | Complete; automated persistence/integrity pass, manual GUI workflow remains |
+| 4 — Local Search & Document Library | Complete; automated FTS/bookmark persistence pass, OS file-panel/open check remains |
+| 5 — Local AI and RAG | Complete in code; deterministic RAG passes, real on-device generation remains environment-blocked |
+| 6 — Research Ingestion | Complete in code; deterministic acceptance coverage passes, full GUI walkthrough remains manual |
+| 7–10 | Not started |
 
 Phase 4 provides offline SQLite FTS5 search, record/claim/document result navigation, filters, and a bookmark-referenced local document library. See `CURRENT_STATE.md` and `MILESTONE.md` for verified behavior and remaining manual checks.
 
-Phase 5 uses Apple on-device Foundation Models when available and reuses Phase 4 FTS5. See `ARCHITECTURE.md`, `CURRENT_STATE.md`, and `MILESTONE.md` for the exact verification boundary. Phase 6 has not begun.
-
-## Phase 6 checkpoint update — 2026-09-27
-
-This update supersedes “Phase 6 has not begun” above: **Phase 6 backend implemented; phase INCOMPLETE.** Versioned research packages, persisted staging/audit and atomic reviewed-decision commits are tested. Native Research UI and end-to-end runtime acceptance remain. Resume with the exact next task in `RESEARCH_INGESTION.md`. Phases 7–10 remain unimplemented.
+Phase 5 uses Apple on-device Foundation Models when available and reuses Phase 4 FTS5. Phase 6 adds versioned packages, persisted staging/audit, native review UI, and atomic reviewed-decision commits without adding network research. See `PHASE_6_CHECKPOINT.md` for the verified boundary and remaining manual checks. The repository is technically ready for Phase 7, but Phase 7 must not begin until explicitly requested.
