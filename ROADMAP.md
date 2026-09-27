@@ -1,6 +1,6 @@
 # Roadmap
 
-Current work: **Phase 7 checkpoint complete; Phase 8 next.**
+Current work: **Phase 8 checkpoint complete; Phase 9 next.**
 
 Platform baseline: macOS 26 or later. The project does not preserve compatibility with earlier macOS releases.
 
@@ -14,7 +14,8 @@ Platform baseline: macOS 26 or later. The project does not preserve compatibilit
 | 5 — Local AI and RAG | Complete in code; deterministic RAG passes, real on-device generation remains environment-blocked |
 | 6 — Research Ingestion | Complete in code; deterministic acceptance coverage passes, full GUI walkthrough remains manual |
 | 7 — Knowledge Graph | Implemented; regression/build pass; GUI check UNVERIFIED |
-| 8–10 | Not started |
+| 8 — Engineering Tools | Degradation workflow implemented; deterministic tests/build pass; GUI/model UNVERIFIED |
+| 9–10 | Not started |
 
 Phase 4 provides offline SQLite FTS5 search, record/claim/document result navigation, filters, and a bookmark-referenced local document library. See `CURRENT_STATE.md` and `MILESTONE.md` for verified behavior and remaining manual checks.
 

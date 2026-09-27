@@ -41,3 +41,7 @@ Approved dependencies must also be explicitly accepted or reused. An outer savep
 ## Phase 7 graph
 
 `KnowledgeGraph` creates a transient indexed snapshot from the existing repository. No second persistence layer or schema is introduced. `GraphPage` presents bounded BFS paths, exact edge/claim provenance and generic comparisons using existing UI primitives. See `PHASE_7_CHECKPOINT.md` for derivation, ranking, status and limit semantics.
+
+## Phase 8 engineering tools
+
+`AssessmentInput`, `DegradationReport`, and `DegradationAssessment` form a small reusable workflow boundary. Rules are source-backed existing claims, not a parallel rule store. Deterministic screening and optional local explanation are separate. `AssessmentPage` uses existing native design components and exports text. See `ENGINEERING_TOOLS.md` for the rule contract.

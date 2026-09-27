@@ -2,7 +2,7 @@
 
 ## Scope
 
-Phases 0 through 7 are implemented in one native SwiftUI macOS 26+ target. The app uses system SQLite/FTS5, AppKit file panels, security-scoped bookmarks, and Apple Foundation Models when available. It has no web runtime, third-party dependency, cloud fallback, network research service, embeddings store, autonomous ingestion, sync, or Phase 8–10 functionality.
+Phases 0 through 8 are implemented in one native SwiftUI macOS 26+ target. The app uses system SQLite/FTS5, AppKit file panels, security-scoped bookmarks, and Apple Foundation Models when available. It has no web runtime, third-party dependency, cloud fallback, network research service, embeddings store, autonomous ingestion, sync, or Phase 9–10 functionality.
 
 The local database is `Application Support/MaterialsIntelligence/knowledge.sqlite`. Current schema version is 4: records/claims/relationships, claim lifecycle, Library/FTS, and research-session snapshots. Foreign keys are enabled on open. Version 1 and direct version 3 upgrades are regression-tested, preserve stable IDs and existing knowledge, and complete without foreign-key violations.
 
@@ -31,6 +31,10 @@ Search remains lexical OR-prefix FTS over structured text and document metadata,
 
 Implemented and regression-tested; see `PHASE_7_CHECKPOINT.md` for graph semantics and verification. Native explorer, related-record entry points, claim Why paths, and comparisons use the unchanged repository. Release build and process launch pass; screen capture is unavailable, so interaction/visual checks remain UNVERIFIED.
 
+## Phase 8
+
+Degradation assessment operates end-to-end with stored evidence, scoped explicit rules, contradictions, gaps, assumptions, report export and optional local explanation. See `ENGINEERING_TOOLS.md`. No unsupported engineering thresholds or new persistence layer.
+
 ## Exact next action
 
-Implement Phase 8 degradation assessment with explicit evidence, assumptions, and gaps. Phase 7 is checkpointed with the documented GUI limitation. Phases 8–10 remain authorized, sequential work.
+Implement Phase 9 native iPhone/iPad and explicit opt-in permitted-data synchronization; preserve independent Mac operation. No simulator runtimes/devices are installed; mobile SDK builds are available, runtime checks may remain UNVERIFIED.

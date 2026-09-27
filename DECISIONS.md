@@ -79,3 +79,7 @@ Retain the Phase 2–6 architecture after audit: one SQLite store, deterministic
 ## 2026-09-27 — Bounded graph over existing knowledge
 
 Use an adjacency snapshot and shortest-path native disclosure lists rather than a second graph database or visual-graph runtime. Only active claim source references derive edges. Preserve stored predicates, direction and evidence statuses; a browseable path is not a verified causal explanation. No architecture replacement.
+
+## 2026-09-27 — Explicit source-backed screening rules
+
+Represent scoped deterministic rules as versioned JSON in existing claim notes with predicate assessment_rule. This preserves claim lifecycle, source traceability, research review and migration compatibility without unsupported built-in limits. Direct relationships identify candidates only. A conservative complete degradation workflow precedes other tool families.
