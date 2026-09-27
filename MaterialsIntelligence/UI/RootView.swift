@@ -1,8 +1,8 @@
 import SwiftUI
 import AppKit
 
-enum AppSection: String, CaseIterable, Identifiable { case overview, ask, search, library, research, materials, mechanisms, standards, components, sources, claims, relationships, settings
- var id: Self { self }; var title: String { switch self { case .overview:"Overview"; case .ask:"Ask"; case .search:"Search"; case .library:"Library"; case .research:"Research"; case .materials:"Materials"; case .mechanisms:"Damage Mechanisms"; case .standards:"Standards"; case .components:"Components"; case .sources:"Sources"; case .claims:"Claims"; case .relationships:"Relationships"; case .settings:"Settings" } }
+enum AppSection: String, CaseIterable, Identifiable { case explorer, overview, ask, search, library, research, materials, mechanisms, standards, components, sources, claims, relationships, settings
+ var id: Self { self }; var title: String { switch self { case .explorer:"Explorer"; case .overview:"Overview"; case .ask:"Ask"; case .search:"Search"; case .library:"Library"; case .research:"Research"; case .materials:"Materials"; case .mechanisms:"Damage Mechanisms"; case .standards:"Standards"; case .components:"Components"; case .sources:"Sources"; case .claims:"Claims"; case .relationships:"Relationships"; case .settings:"Settings" } }
  var kind: RecordKind? { switch self { case .materials:.material; case .mechanisms:.mechanism; case .standards:.standard; case .components:.component; case .sources:.source; default:nil } }
 }
 
@@ -16,7 +16,7 @@ private struct Sidebar: View { @Binding var selection: AppSection?
   HStack(spacing: 10) { Image(systemName: "cube.transparent").font(.title2).foregroundStyle(.blue); Text("Materials Intelligence").font(.headline) }.padding(.horizontal, 18).padding(.top, 22).padding(.bottom, 18)
   ScrollView {
    VStack(alignment: .leading, spacing: 3) {
-    nav(.overview); nav(.ask); nav(.search); nav(.research)
+    nav(.explorer); nav(.overview); nav(.ask); nav(.search); nav(.research)
     sidebarSection("Knowledge", items: [.materials, .mechanisms, .components, .standards, .sources])
     sidebarSection("Evidence", items: [.library, .claims, .relationships])
     nav(.settings).padding(.top, 8)
@@ -29,10 +29,10 @@ private struct Sidebar: View { @Binding var selection: AppSection?
  private func sidebarSection(_ title: String, items: [AppSection]) -> some View { VStack(alignment: .leading, spacing: 3) { Text(title.uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 12).padding(.top, 14).padding(.bottom, 2); ForEach(items) { nav($0) } } }
 }
 private struct SidebarButtonStyle: ButtonStyle { let selected: Bool; func makeBody(configuration: Configuration) -> some View { configuration.label.font(.system(size: 13, weight: selected ? .semibold : .regular)).foregroundStyle(selected ? Color.accentColor : .primary).background(selected ? Color.accentColor.opacity(0.14) : (configuration.isPressed ? Color.primary.opacity(0.08) : .clear), in: RoundedRectangle(cornerRadius: 7, style: .continuous)).opacity(configuration.isPressed ? 0.78 : 1) } }
-private extension AppSection { var symbol:String { switch self { case .overview:"house"; case .ask:"questionmark.bubble"; case .search:"magnifyingglass"; case .library:"books.vertical"; case .research:"doc.badge.plus"; case .materials:"cube"; case .mechanisms:"exclamationmark.shield"; case .standards:"text.book.closed"; case .components:"gearshape"; case .sources:"doc.text"; case .claims:"checkmark.seal"; case .relationships:"link"; case .settings:"gear" } } }
+private extension AppSection { var symbol:String { switch self { case .explorer:"point.3.connected.trianglepath.dotted"; case .overview:"house"; case .ask:"questionmark.bubble"; case .search:"magnifyingglass"; case .library:"books.vertical"; case .research:"doc.badge.plus"; case .materials:"cube"; case .mechanisms:"exclamationmark.shield"; case .standards:"text.book.closed"; case .components:"gearshape"; case .sources:"doc.text"; case .claims:"checkmark.seal"; case .relationships:"link"; case .settings:"gear" } } }
 
 private struct Page: View { let section: AppSection; let store: KnowledgeStore?; @Binding var refresh: UUID; @Binding var targetID:String?; let error: String?; let openResult:(SearchResult)->Void; let navigate:(AppSection)->Void
- var body: some View { Group { if let error { ContentUnavailableView("Database unavailable", systemImage:"externaldrive.badge.exclamationmark", description:Text(error)) } else if let store { if section == .overview { Overview(store: store, navigate: navigate) } else if section == .materials { MaterialsPage(store: store, refresh: $refresh, targetID: $targetID) } else if let kind=section.kind { RecordPage(kind:kind, store:store, refresh:$refresh, targetID:$targetID) } else if section == .search { SearchPage(store:store, openResult:openResult) } else if section == .library { LibraryPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .research { ResearchPage(store: store) } else if section == .claims { ClaimsPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .relationships { RelationshipsPage(store:store, refresh:$refresh) } else if section == .ask { AskPage(store: store, openResult: openResult) } else if section == .settings { SettingsPage() } else { Overview(store:store, navigate:navigate) } } else { ProgressView("Opening local knowledge") } }.toolbar { Button("Refresh", systemImage:"arrow.clockwise") { refresh=UUID() } } }
+ var body: some View { Group { if let error { ContentUnavailableView("Database unavailable", systemImage:"externaldrive.badge.exclamationmark", description:Text(error)) } else if let store { if section == .explorer { GraphPage(store: store, openResult: openResult) } else if section == .overview { Overview(store: store, navigate: navigate) } else if section == .materials { MaterialsPage(store: store, refresh: $refresh, targetID: $targetID) } else if let kind=section.kind { RecordPage(kind:kind, store:store, refresh:$refresh, targetID:$targetID) } else if section == .search { SearchPage(store:store, openResult:openResult) } else if section == .library { LibraryPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .research { ResearchPage(store: store) } else if section == .claims { ClaimsPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .relationships { RelationshipsPage(store:store, refresh:$refresh) } else if section == .ask { AskPage(store: store, openResult: openResult) } else if section == .settings { SettingsPage() } else { Overview(store:store, navigate:navigate) } } else { ProgressView("Opening local knowledge") } }.toolbar { Button("Refresh", systemImage:"arrow.clockwise") { refresh=UUID() } } }
 }
 private struct SettingsPage:View { var body:some View { VStack(alignment: .leading, spacing: 18) { PageHeader(title: "Settings", subtitle: "Local storage and application behavior"); Panel { VStack(alignment: .leading, spacing: 12) { LabeledContent("Storage",value:"Local Application Support database"); LabeledContent("Search",value:"Offline SQLite FTS5"); Divider(); Text("Documents remain at their original locations. Library keeps access bookmarks and metadata.").foregroundStyle(.secondary) } } }.padding(32).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(MITheme.canvas) } }
 
@@ -418,6 +418,7 @@ private struct MaterialDetail: View {
     var body: some View {
         ScrollView { VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .bottom) { VStack(alignment: .leading, spacing: 6) { Text("Materials / \(record.secondary.isEmpty ? "Alloys" : record.secondary) / \(record.name)").font(.caption).foregroundStyle(.secondary); Text(record.name).font(.system(size: 30, weight: .bold, design: .rounded)) }; Spacer(); Button("Edit", action: edit).buttonStyle(.borderedProminent); Button("Delete", role: .destructive, action: delete) }
+            RelatedKnowledgeButton(store: store, recordID: record.id)
             HStack(spacing: 8) { Text(record.secondary.isEmpty ? "Material" : record.secondary).padding(.horizontal, 10).padding(.vertical, 5).background(.blue.opacity(0.12), in: Capsule()); Text("Local record").foregroundStyle(.secondary) }
             HStack(alignment: .top, spacing: 14) {
                 Panel { VStack(alignment: .leading, spacing: 12) { SectionTitle("Material profile", icon: "cube"); detailRow("Common name", record.name); detailRow("Designation", record.secondary.isEmpty ? "Not recorded" : record.secondary); detailRow("Class", "Material record"); detailRow("Notes", record.detail.isEmpty ? "No detail recorded." : record.detail); Divider(); Text("Source-preserved engineering knowledge").font(.headline); Text("Properties and context remain attached to local records and their evidence.").foregroundStyle(.secondary) } }.frame(maxWidth: .infinity)
@@ -484,7 +485,7 @@ private struct RecordDetail: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 5) { Text(record.name).font(.system(size: 30, weight: .bold, design: .rounded)); Text(record.kind.rawValue.capitalized).font(.subheadline).foregroundStyle(.secondary) }
+                    VStack(alignment: .leading, spacing: 5) { Text(record.name).font(.system(size: 30, weight: .bold, design: .rounded)); RelatedKnowledgeButton(store: store, recordID: record.id); Text(record.kind.rawValue.capitalized).font(.subheadline).foregroundStyle(.secondary) }
                     Spacer()
                     Button("Edit", action: edit).buttonStyle(.borderedProminent)
                     Button("Delete", role: .destructive, action: delete)
@@ -564,6 +565,7 @@ private struct ClaimsPage: View {
                         LabeledContent("Source", value: (try? store.record(id: selected.sourceID))?.name ?? "Unknown")
                         LabeledContent("Page / section", value: selected.locator)
                         Text(selected.notes)
+                        RelatedKnowledgeButton(store: store, recordID: selected.subjectID, claimID: selected.id)
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(28)
                 }
             } else { ContentUnavailableView("Select a claim", systemImage: "checkmark.seal") }

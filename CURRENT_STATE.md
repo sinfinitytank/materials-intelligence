@@ -2,7 +2,7 @@
 
 ## Scope
 
-Phases 0 through 6 are implemented in one native SwiftUI macOS 26+ target. The app uses system SQLite/FTS5, AppKit file panels, security-scoped bookmarks, and Apple Foundation Models when available. It has no web runtime, third-party dependency, cloud fallback, network research service, embeddings store, autonomous ingestion, graph explorer, sync, or Phase 7 functionality.
+Phases 0 through 7 are implemented in one native SwiftUI macOS 26+ target. The app uses system SQLite/FTS5, AppKit file panels, security-scoped bookmarks, and Apple Foundation Models when available. It has no web runtime, third-party dependency, cloud fallback, network research service, embeddings store, autonomous ingestion, sync, or Phase 8–10 functionality.
 
 The local database is `Application Support/MaterialsIntelligence/knowledge.sqlite`. Current schema version is 4: records/claims/relationships, claim lifecycle, Library/FTS, and research-session snapshots. Foreign keys are enabled on open. Version 1 and direct version 3 upgrades are regression-tested, preserve stable IDs and existing knowledge, and complete without foreign-key violations.
 
@@ -27,6 +27,10 @@ Automated tests and process launch do not establish visual correctness or comple
 
 Search remains lexical OR-prefix FTS over structured text and document metadata, not document contents or semantic embeddings. Matching is deliberately conservative and deterministic; it does not infer numeric or semantic contradictions. Research boundary labels are provenance, not row-level authorization. Audit stores original and final snapshots, not every intermediate event. Research editing assumes the app's single-store serial UI workflow; stale revisions prevent lost updates, while multi-process collaborative review is unsupported.
 
+## Phase 7
+
+Implemented and regression-tested; see `PHASE_7_CHECKPOINT.md` for graph semantics and verification. Native explorer, related-record entry points, claim Why paths, and comparisons use the unchanged repository. Release build and process launch pass; screen capture is unavailable, so interaction/visual checks remain UNVERIFIED.
+
 ## Exact next action
 
-Perform the remaining manual GUI and eligible-device model checks listed in `PHASE_6_CHECKPOINT.md`. The repository is technically ready for Phase 7 based on build, migration, integrity, search, RAG, and ingestion evidence, but Phase 7 must not begin without an explicit request.
+Implement Phase 8 degradation assessment with explicit evidence, assumptions, and gaps. Phase 7 is checkpointed with the documented GUI limitation. Phases 8–10 remain authorized, sequential work.

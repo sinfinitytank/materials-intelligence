@@ -75,3 +75,7 @@ Implement the research import/review workflow as a dedicated SwiftUI navigation 
 ## 2026-09-27 — Post-Phase-6 consolidation
 
 Retain the Phase 2–6 architecture after audit: one SQLite store, deterministic FTS5 retrieval, staged research snapshots, and the existing claim-review gate remain appropriate and no replacement is justified. Restore material add/edit/delete actions that were lost in the specialized material-profile presentation, keep sources in one Research review section, and add direct schema-3 migration plus invalid-import/edit regressions. No Phase 7 behavior is introduced.
+
+## 2026-09-27 — Bounded graph over existing knowledge
+
+Use an adjacency snapshot and shortest-path native disclosure lists rather than a second graph database or visual-graph runtime. Only active claim source references derive edges. Preserve stored predicates, direction and evidence statuses; a browseable path is not a verified causal explanation. No architecture replacement.

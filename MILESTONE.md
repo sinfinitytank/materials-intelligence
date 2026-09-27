@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Post-Phase-6 verification and consolidation is complete. Phase 7 has not started.
+Phase 7 implementation and automated acceptance are complete with GUI verification limited by the environment. See `PHASE_7_CHECKPOINT.md`. Next: Phase 8 degradation assessment.
 
 ## Completed
 
@@ -52,4 +52,4 @@ Post-Phase-6 verification and consolidation is complete. Phase 7 has not started
 
 ## Phase 7 readiness
 
-**Technically ready, with manual acceptance caveats.** No automated blocker, integrity defect, migration defect, or Phase 5/6 integration defect remains known. The manual checks above should be completed before relying on the app for engineering work, but they do not require a Phase 0–6 architectural change. Do not start Phase 7 until explicitly requested.
+**Technically ready, with manual acceptance caveats.** No automated blocker, integrity defect, migration defect, or Phase 5/6 integration defect remains known. The manual checks above should be completed before relying on the app for engineering work, but they do not require a Phase 0–6 architectural change. Phase 7 was explicitly authorized and has now been implemented.
