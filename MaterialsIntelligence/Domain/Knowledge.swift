@@ -1,7 +1,7 @@
 import Foundation
 
-enum RecordKind: String, CaseIterable, Sendable { case material, mechanism, standard, component, source }
-struct KnowledgeRecord: Identifiable, Equatable, Hashable, Sendable {
+enum RecordKind: String, CaseIterable, Codable, Sendable { case material, mechanism, standard, component, source }
+struct KnowledgeRecord: Identifiable, Equatable, Hashable, Codable, Sendable {
     let id: String
     let kind: RecordKind
     var name: String
@@ -11,10 +11,10 @@ struct KnowledgeRecord: Identifiable, Equatable, Hashable, Sendable {
         self.id = id; self.kind = kind; self.name = name; self.detail = detail; self.secondary = secondary
     }
 }
-enum VerificationStatus: String, CaseIterable, Sendable { case draft, unverified, reviewed, verified, superseded, archived
+enum VerificationStatus: String, CaseIterable, Codable, Sendable { case draft, unverified, reviewed, verified, superseded, archived
     var title: String { rawValue.capitalized }
 }
-struct EngineeringClaim: Identifiable, Equatable, Hashable, Sendable {
+struct EngineeringClaim: Identifiable, Equatable, Hashable, Codable, Sendable {
     let id: String
     var subjectID: String
     var predicate: String
@@ -29,7 +29,7 @@ struct EngineeringClaim: Identifiable, Equatable, Hashable, Sendable {
         self.id = id; self.subjectID = subjectID; self.predicate = predicate; self.statement = statement; self.conditions = conditions; self.sourceID = sourceID; self.locator = locator; self.status = status; self.evidenceLevel = evidenceLevel; self.notes = notes
     }
 }
-struct KnowledgeRelationship: Identifiable, Equatable, Hashable, Sendable {
+struct KnowledgeRelationship: Identifiable, Equatable, Hashable, Codable, Sendable {
     let id: String
     var fromID: String
     var predicate: String
@@ -54,7 +54,7 @@ struct SearchResult: Identifiable, Equatable, Sendable {
     let score: Double
 }
 
-struct LibraryDocument: Identifiable, Equatable, Hashable, Sendable {
+struct LibraryDocument: Identifiable, Equatable, Hashable, Codable, Sendable {
     let id: String
     var title: String
     var organization: String

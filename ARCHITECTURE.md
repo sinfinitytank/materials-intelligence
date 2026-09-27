@@ -45,3 +45,7 @@ Approved dependencies must also be explicitly accepted or reused. An outer savep
 ## Phase 8 engineering tools
 
 `AssessmentInput`, `DegradationReport`, and `DegradationAssessment` form a small reusable workflow boundary. Rules are source-backed existing claims, not a parallel rule store. Deterministic screening and optional local explanation are separate. `AssessmentPage` uses existing native design components and exports text. See `ENGINEERING_TOOLS.md` for the rule contract.
+
+## Phase 9 shared targets and opt-in vault
+
+The universal iPhone/iPad target shares existing non-AppKit source files; no duplicate domain model. PersonalVaultView is shared adaptive reference UI. Schema 5 adds SQLite sync metadata. PersonalSync only operates on the separate personal/public store; VaultSnapshot validates a versioned payload and applies it atomically through the same repository, deferring FTS until transaction end. Private CloudKit uses optimistic concurrency, explicit incoming review and local recovery. See `MOBILE_SYNC.md`. The original Mac vault stays independent and local.

@@ -2,9 +2,9 @@
 
 ## Scope
 
-Phases 0 through 8 are implemented in one native SwiftUI macOS 26+ target. The app uses system SQLite/FTS5, AppKit file panels, security-scoped bookmarks, and Apple Foundation Models when available. It has no web runtime, third-party dependency, cloud fallback, network research service, embeddings store, autonomous ingestion, sync, or Phase 9–10 functionality.
+Phases 0 through 9 are implemented in native SwiftUI macOS 26+ and universal iOS/iPadOS 26+ targets. The app uses system SQLite/FTS5, AppKit file panels, security-scoped bookmarks, and Apple Foundation Models when available. It has no web runtime, third-party dependency, cloud fallback, network research service, embeddings store, autonomous ingestion, autonomous research, or Phase 10 functionality.
 
-The local database is `Application Support/MaterialsIntelligence/knowledge.sqlite`. Current schema version is 4: records/claims/relationships, claim lifecycle, Library/FTS, and research-session snapshots. Foreign keys are enabled on open. Version 1 and direct version 3 upgrades are regression-tested, preserve stable IDs and existing knowledge, and complete without foreign-key violations.
+The local database is `Application Support/MaterialsIntelligence/knowledge.sqlite`. Current schema version is 5 (version 5 adds sync metadata): records/claims/relationships, claim lifecycle, Library/FTS, and research-session snapshots. Foreign keys are enabled on open. Version 1 and direct version 3 upgrades are regression-tested, preserve stable IDs and existing knowledge, and complete without foreign-key violations.
 
 ## Implemented product
 
@@ -35,6 +35,10 @@ Implemented and regression-tested; see `PHASE_7_CHECKPOINT.md` for graph semanti
 
 Degradation assessment operates end-to-end with stored evidence, scoped explicit rules, contradictions, gaps, assumptions, report export and optional local explanation. See `ENGINEERING_TOOLS.md`. No unsupported engineering thresholds or new persistence layer.
 
+## Phase 9
+
+Universal iPhone/iPad target and separate personal/public vault added. Shared models, repository, FTS, RAG and intelligence services remain native. Opt-in private CloudKit adapter uses snapshot compare-and-swap, incoming review, explicit conflict resolution and recovery. Original Mac vault remains local. See `MOBILE_SYNC.md` for data boundaries, signing setup and UNVERIFIED real account/device checks.
+
 ## Exact next action
 
-Implement Phase 9 native iPhone/iPad and explicit opt-in permitted-data synchronization; preserve independent Mac operation. No simulator runtimes/devices are installed; mobile SDK builds are available, runtime checks may remain UNVERIFIED.
+Implement Phase 10 controlled local evidence-backed degradation agent over existing services. Preserve the Phase 6 ingestion gate; keep history in SQLite. Complete regression/benchmark gates and final read-only roadmap audit. No phase beyond 10 is authorized.

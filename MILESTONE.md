@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Phase 7 implementation and automated acceptance are complete with GUI verification limited by the environment. See `PHASE_7_CHECKPOINT.md`. Phase 8 degradation assessment is implemented and tested; see `ENGINEERING_TOOLS.md`. Next: Phase 9 mobile and sync.
+Phase 7 implementation and automated acceptance are complete with GUI verification limited by the environment. See `PHASE_7_CHECKPOINT.md`. Phase 8 degradation assessment is implemented and tested; see `ENGINEERING_TOOLS.md`. Phase 9 implementation and deterministic sync tests are complete; see `MOBILE_SYNC.md` for account/device limitations. Next: Phase 10 controlled agent.
 
 ## Completed
 

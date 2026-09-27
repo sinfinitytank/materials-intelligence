@@ -1,6 +1,6 @@
 # Roadmap
 
-Current work: **Phase 8 checkpoint complete; Phase 9 next.**
+Current work: **Phase 9 checkpoint complete; Phase 10 next.**
 
 Platform baseline: macOS 26 or later. The project does not preserve compatibility with earlier macOS releases.
 
@@ -15,7 +15,8 @@ Platform baseline: macOS 26 or later. The project does not preserve compatibilit
 | 6 — Research Ingestion | Complete in code; deterministic acceptance coverage passes, full GUI walkthrough remains manual |
 | 7 — Knowledge Graph | Implemented; regression/build pass; GUI check UNVERIFIED |
 | 8 — Engineering Tools | Degradation workflow implemented; deterministic tests/build pass; GUI/model UNVERIFIED |
-| 9–10 | Not started |
+| 9 — Mobile & Sync | Implemented; native builds and deterministic sync tests; real iCloud/device UNVERIFIED |
+| 10 — Advanced Agent | Not started |
 
 Phase 4 provides offline SQLite FTS5 search, record/claim/document result navigation, filters, and a bookmark-referenced local document library. See `CURRENT_STATE.md` and `MILESTONE.md` for verified behavior and remaining manual checks.
 

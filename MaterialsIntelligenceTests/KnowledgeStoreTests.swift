@@ -47,7 +47,7 @@ import SQLite3
         try legacyFixture(at: url)
         do {
             let store = try KnowledgeStore(url: url)
-            try check(try store.schemaVersion() == 4, "migration version")
+            try check(try store.schemaVersion() == 5, "migration version")
             try check(try store.foreignKeyViolations() == 0, "migration foreign keys")
             try check(try store.record(id: "m")?.name == "Alloy 725", "material preserved")
             try check(try store.record(id: "s")?.kind == .source, "source preserved")
@@ -59,7 +59,7 @@ import SQLite3
             try store.save(edited)
         }
         let reopened = try KnowledgeStore(url: url)
-        try check(try reopened.schemaVersion() == 4, "reopened migration version")
+        try check(try reopened.schemaVersion() == 5, "reopened migration version")
         try check(try reopened.foreignKeyViolations() == 0, "reopened foreign keys")
         try check(try reopened.claim(id: "c")?.status == .verified, "claim lifecycle persisted")
         try check(try reopened.relationships().first?.supportingClaimID == "c", "reopened relationship")
@@ -75,7 +75,7 @@ import SQLite3
             try sql(db, "PRAGMA user_version=3")
         }
         let migrated = try KnowledgeStore(url: url)
-        try check(try migrated.schemaVersion() == 4, "phase 5 database advances to schema 4")
+        try check(try migrated.schemaVersion() == 5, "phase 5 database advances to schema 5")
         try check(try migrated.record(id: "phase5-material")?.name == "Phase 5 retained material", "phase 5 knowledge survives schema 4 migration")
         try check(try migrated.researchSessions().isEmpty, "schema 4 staging starts empty")
         try check(try migrated.foreignKeyViolations() == 0, "phase 5 to 6 migration foreign keys")
@@ -84,7 +84,7 @@ import SQLite3
         let url = temporaryURL(); defer { try? FileManager.default.removeItem(at: url) }
         do {
             let store = try KnowledgeStore(url: url)
-            try check(try store.schemaVersion() == 4, "fresh schema")
+            try check(try store.schemaVersion() == 5, "fresh schema")
             try check(try store.foreignKeyViolations() == 0, "fresh foreign keys")
             try store.seedIfEmpty()
             let initial = try store.records().count

@@ -30,8 +30,8 @@ struct AppleLocalProvider: LocalAIProvider {
     var availabilityMessage: String? {
         switch SystemLanguageModel.default.availability {
             case .available: return nil
-            case .unavailable(.deviceNotEligible): return "This Mac does not support the on-device Apple model."
-            case .unavailable(.appleIntelligenceNotEnabled): return "Enable Apple Intelligence in System Settings to use local answers."
+            case .unavailable(.deviceNotEligible): return "This device does not support the on-device Apple model."
+            case .unavailable(.appleIntelligenceNotEnabled): return "Enable Apple Intelligence in Settings to use local answers."
             case .unavailable(.modelNotReady): return "The on-device Apple model is not ready yet."
             @unknown default: return "The on-device Apple model is unavailable."
         }

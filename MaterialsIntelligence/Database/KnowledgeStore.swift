@@ -8,6 +8,7 @@ struct KnowledgeStoreError: Error, LocalizedError {
 
 final class KnowledgeStore {
     private var db: OpaquePointer?
+    private var deferSearchIndex = false
     static func applicationURL() throws -> URL {
         let folder = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appending(path: "MaterialsIntelligence")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -72,7 +73,7 @@ final class KnowledgeStore {
     }
     private func migrate() throws {
         let version = try schemaVersion()
-        guard version <= 4 else { throw KnowledgeStoreError(message: "Database schema is newer than this app") }
+        guard version <= 5 else { throw KnowledgeStoreError(message: "Database schema is newer than this app") }
         if version == 0 {
             try execute("BEGIN IMMEDIATE")
             do {
@@ -132,6 +133,43 @@ final class KnowledgeStore {
                 try execute("CREATE TABLE research_sessions (id TEXT PRIMARY KEY, snapshot TEXT NOT NULL)")
                 try execute("PRAGMA user_version = 4")
             }
+        }
+        if version <= 4 {
+            try transaction {
+                try execute("CREATE TABLE IF NOT EXISTS sync_state (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+                try execute("PRAGMA user_version = 5")
+            }
+        }
+    }
+    func syncMetadata(_ key: String) throws -> String? {
+        var value: String?
+        try query("SELECT value FROM sync_state WHERE key=?", [key]) { value = text($0, 0) }
+        return value
+    }
+    func setSyncMetadata(_ key: String, _ value: String) throws {
+        try execute("INSERT INTO sync_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [key,value])
+    }
+    func replacePersonalSnapshot(_ snapshot: VaultSnapshot) throws {
+        try snapshot.validate()
+        let bookmarks = Dictionary(uniqueKeysWithValues: try documents().map { ($0.id, $0.bookmark) })
+        try transaction {
+            let previous = deferSearchIndex
+            deferSearchIndex = true
+            defer { deferSearchIndex = previous }
+            try execute("DELETE FROM document_records")
+            try execute("DELETE FROM relationships")
+            try execute("DELETE FROM claims")
+            try execute("DELETE FROM documents")
+            try execute("DELETE FROM records")
+            try execute("DELETE FROM research_sessions")
+            for r in snapshot.records { try save(r) }
+            for c in snapshot.claims { try save(c) }
+            for r in snapshot.relationships { try save(r) }
+            for var d in snapshot.documents { d.bookmark = bookmarks[d.id] ?? ""; try save(d, recordIDs: snapshot.documentLinks[d.id] ?? []); try execute("UPDATE documents SET added_at=? WHERE id=?", [d.addedAt,d.id]) }
+            for session in snapshot.research { try writeResearch(session) }
+            deferSearchIndex = previous
+            try rebuildSearchIndex()
+            try setSyncMetadata("base", try snapshot.encoded().base64EncodedString())
         }
     }
     func save(_ record: KnowledgeRecord) throws {
@@ -208,6 +246,7 @@ final class KnowledgeStore {
         }; return rows
     }
     private func rebuildSearchIndex() throws {
+        guard !deferSearchIndex else { return }
         try execute("DELETE FROM search_index")
         try execute("""
             INSERT INTO search_index(entity_id,entity_type,title,body,kind)

@@ -83,3 +83,7 @@ Use an adjacency snapshot and shortest-path native disclosure lists rather than 
 ## 2026-09-27 — Explicit source-backed screening rules
 
 Represent scoped deterministic rules as versioned JSON in existing claim notes with predicate assessment_rule. This preserves claim lifecycle, source traceability, research review and migration compatibility without unsupported built-in limits. Direct relationships identify candidates only. A conservative complete degradation workflow precedes other tool families.
+
+## 2026-09-27 — Separate permitted vault and conservative snapshot sync
+
+Share source membership rather than replace the working Mac architecture. Use one universal mobile target with native adaptive navigation. Existing work data is never automatically eligible for personal iCloud: a separate vault with opt-in is the sync boundary. Whole-snapshot CloudKit compare-and-swap and explicit review avoid silent overwrites while retaining recoverable content. This intentionally favors simple safe personal sync over background field-level merge. Documents sync metadata only, not device bookmarks/files. No architectural replacement.
