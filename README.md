@@ -1,16 +1,17 @@
 # Materials Intelligence
 
-Materials Intelligence is a native macOS workspace for organizing, reviewing, and exploring materials-engineering knowledge.
+![Materials Intelligence logo](Branding/MaterialsIntelligenceMark.svg)
+
+Materials Intelligence is a native macOS workspace for organizing, reviewing, and exploring materials-engineering knowledge, with a focus on oil and gas applications.
 
 It is designed for engineers and researchers who need a focused place to keep material records, technical claims, supporting references, and research notes together—so important decisions remain easier to find, understand, and revisit.
 
 > Early development release — the project is actively evolving and is not yet intended for production-critical engineering decisions.
 
-![Materials Intelligence overview](UI-UX%20Sketches/01-overview.png)
-
 ## Highlights
 
 - Native macOS experience with a clean, focused workspace
+- A custom crystal-and-knowledge-graph mark used in the app icon and workspace
 - Structured material and engineering-knowledge records
 - Searchable claims, references, and supporting evidence
 - Document library for associating local research files with knowledge
@@ -18,16 +19,7 @@ It is designed for engineers and researchers who need a focused place to keep ma
 - Privacy-conscious, local-first design for research conducted on the desktop
 - Guarded local retrieval-augmented Ask workflow using Apple’s on-device model when available
 - Reviewed JSON research ingestion with persistent staging, duplicate/conflict suggestions, atomic commit, and audit history
-
-## Screenshots
-
-| Overview | Material profile |
-| --- | --- |
-| ![Overview](UI-UX%20Sketches/01-overview.png) | ![Material profile](UI-UX%20Sketches/02-material-profile.png) |
-
-| Local workspace | Document library |
-| --- | --- |
-| ![Local workspace](UI-UX%20Sketches/03-local-ask.png) | ![Document library](UI-UX%20Sketches/04-document-library.png) |
+- Five bounded engineering workflows for material comparison, degradation, vendor qualification, failure investigation, and fit-for-purpose evidence review
 
 ## Requirements
 
@@ -48,9 +40,11 @@ For the checks that still require a local Mac, eligible Apple model, iPhone/iPad
 
 For everyday use and a synthetic walkthrough, see the [user guide](USER_GUIDE.md).
 
+Open **About** from the app toolbar or the Materials Intelligence menu for product and version details.
+
 ## Current verification
 
-Implementations exist through Phase 10. Eight deterministic suites pass, along with macOS Debug/Release builds and unsigned generic iOS Simulator/device Release builds. A live macOS accessibility harness checks window resizing, global navigation, Private Vault tab lifecycle, local sync-configuration error handling, and close/reopen. Research packages remain staged until explicit review and an atomic commit; new claims enter as Unverified. Ask uses local SQLite/FTS5 retrieval and only supplies Reviewed or Verified claims to the on-device model. There is no cloud fallback, network service, embeddings index, or third-party runtime. This Mac reports Apple Foundation Models `modelNotReady`; real generation, CloudKit transfer, iOS runtime behavior, screenshot-based appearance review and additional manual workflows remain unverified. The roadmap is not complete; see [current state](CURRENT_STATE.md) and [remaining manual acceptance](MANUAL_ACCEPTANCE_REMAINING.md).
+Implementations exist through Phase 10. Nine deterministic suites cover the repository, retrieval, ingestion, graph, all engineering workflows, sync, library access and agent benchmarks. macOS Debug/Release and unsigned generic iOS Simulator/device Release builds are part of the acceptance set; see [current state](CURRENT_STATE.md) for the latest run results. Research packages remain staged until explicit review and atomic commit; new claims enter as Unverified. Ask uses local SQLite/FTS5 retrieval and only supplies Reviewed or Verified claims to the on-device model. There is no cloud fallback, network service, embeddings index or third-party runtime. Real generation, signed CloudKit transfer, iOS runtime behavior, visual review and several live GUI workflows remain unverified; see [remaining manual acceptance](MANUAL_ACCEPTANCE_REMAINING.md).
 
 To run the deterministic test suite from the repository root:
 
@@ -70,7 +64,7 @@ For normal development, open `MaterialsIntelligence.xcodeproj` in Xcode and run 
 
 ## Project status
 
-Materials Intelligence is being developed in public. Core workspace, knowledge-management, search, document-library, and review foundations are available today. Additional refinement, accessibility review, and broader workflow coverage are ongoing.
+Materials Intelligence is being developed in public. Core workspace, knowledge-management, search, document-library, review foundations, and five bounded engineering workflows are available today. Live account/device and manual accessibility acceptance remain open.
 
 The project deliberately favors clear, reviewable engineering information and a dependable native desktop experience. Capabilities may change between releases while the product is being shaped.
 
@@ -96,6 +90,6 @@ Materials Intelligence is released under the [MIT License](LICENSE). See the lic
 
 Created and maintained by [Siddharth Tank](https://github.com/sinfinitytank).
 
-## Remaining roadmap implementation
+## Remaining acceptance gates
 
-Native graph exploration, degradation screening, a controlled local engineering agent and a universal iPhone/iPad reference target are implemented. Personal/public sync uses a separate opt-in vault. See [current state](CURRENT_STATE.md), [engineering tools](ENGINEERING_TOOLS.md), [mobile and sync setup](MOBILE_SYNC.md), [agent scope](ENGINEERING_AGENT.md), and [final acceptance report](FINAL_ACCEPTANCE_REPORT.md). Real iCloud, mobile runtime, model generation and manual visual/workflow acceptance remain unverified; builds and deterministic tests are not substitutes for those checks.
+Native graph exploration, the five engineering workflows, a controlled local agent and a universal iPhone/iPad reference target are implemented. Personal/public sync uses a separate opt-in vault. See [current state](CURRENT_STATE.md), [engineering tools](ENGINEERING_TOOLS.md), [mobile and sync setup](MOBILE_SYNC.md), and [agent scope](ENGINEERING_AGENT.md). Real iCloud, mobile runtime, model generation and manual visual/workflow acceptance remain unverified; builds and deterministic tests do not establish those checks.

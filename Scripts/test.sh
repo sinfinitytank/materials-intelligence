@@ -7,7 +7,7 @@ trap 'rm -rf "$work"' EXIT
 sources=(MaterialsIntelligence/AI/LocalRAG.swift MaterialsIntelligence/Intelligence/DegradationAssessment.swift MaterialsIntelligence/Intelligence/EngineeringAgent.swift MaterialsIntelligence/Sync/VaultSnapshot.swift MaterialsIntelligence/Intelligence/KnowledgeGraph.swift MaterialsIntelligence/Domain/Knowledge.swift MaterialsIntelligence/Research/ResearchPackage.swift MaterialsIntelligence/Database/KnowledgeStore.swift MaterialsIntelligence/UI/LibraryFileAccess.swift)
 xcrun swiftc "${sources[@]}" MaterialsIntelligenceTests/KnowledgeStoreTests.swift -o "$work/store" -lsqlite3
 "$work/store"
-for suite in LocalRAGTests ResearchIngestionTests KnowledgeGraphTests DegradationAssessmentTests VaultSyncTests LibraryIntegrationTests AgentBenchmarkTests; do
+for suite in LocalRAGTests ResearchIngestionTests KnowledgeGraphTests DegradationAssessmentTests EngineeringWorkflowTests VaultSyncTests LibraryIntegrationTests AgentBenchmarkTests; do
   xcrun swiftc "${sources[@]}" "MaterialsIntelligenceTests/$suite.swift" -o "$work/$suite" -lsqlite3
   "$work/$suite"
 done

@@ -250,7 +250,7 @@ private func runAcceptance() throws {
     let sections = [
         "overview", "ask", "search", "explorer", "research", "materials", "mechanisms", "components",
         "standards", "sources", "library", "claims", "relationships", "assessment", "agent",
-        "personalVault", "settings",
+        "personalVault", "settings", "about",
     ]
 
     for (sizeName, requestedSize) in sizes {
@@ -283,6 +283,12 @@ private func runAcceptance() throws {
         }
         print("PASS global navigation at \(sizeName): \(sections.count * 2) route transitions")
     }
+
+    try pressIdentifier("toolbar.about", in: pid)
+    try require(waitUntil("About toolbar action did not open the About page") {
+        identifier("workspace.page.about", existsIn: pid)
+    }, "About toolbar action did not open the About page")
+    print("PASS About toolbar navigation")
 
     guard let window = applicationWindow(for: pid) else {
         throw AcceptanceFailure(description: "Main window disappeared before minimum-size check")

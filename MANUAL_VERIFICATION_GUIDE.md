@@ -132,33 +132,36 @@ Create or import a small synthetic chain such as material → mechanism → stan
 4. Use **Explore** and then **Back**. Confirm navigation returns to the previous context.
 5. Open two synthetic materials and compare them. Confirm the comparison shows stored narrative properties and evidence, without inventing numeric suitability.
 6. Open a claim and select **Why**. Confirm the path begins with the selected claim and shows only recorded relationships.
-7. In **Engineering Tools**, create a synthetic `assessment_rule` claim using the JSON example in `ENGINEERING_TOOLS.md`, with the actual mechanism ID shown by the app.
-8. Review the rule, run an assessment at the inclusive boundary (10 °C and 2 MPa), and confirm the rule matches.
-9. Run the same assessment outside the rule range and confirm it becomes unresolved or out of scope.
-10. Inspect assumptions, gaps, sources, claim IDs, and the Why link.
-11. Export the report and open the exported text file.
+7. In **Engineering Tools**, create a synthetic `assessment_rule` claim using `ENGINEERING_TOOLS.md` and the actual mechanism ID shown by the app. Review it, run at the inclusive boundary (10 °C and 2 MPa), then outside the rule range. Confirm matching, unresolved/out-of-scope behavior, evidence links and export.
+8. Select **Material comparison**, choose two synthetic materials, and enter exact synthetic scope fields. Add one source-backed `material_selection_rule` per candidate, mark each Reviewed, and confirm only exact-scope rules support consideration or flag exclusion. Change one scope field and confirm the rule no longer applies. Add opposing matching rules and confirm a conflict is shown.
+9. Select **Vendor qualification** and enter synthetic vendor, facility, product, process, heat-treatment, test, observation, finding, corrective-action and history details. Run it, inspect the source-linked evidence and missing fields, export, and reopen the saved run.
+10. Select **Failure investigation**, enter synthetic component/material and observations, select a mechanism, and inspect candidate evidence. Confirm user-entered supportive/contradictory observations remain attributed to the user and no cause is assigned.
+11. Select **Fit-for-purpose review** and create a source-backed `fit_for_purpose_requirement` claim using the JSON in `ENGINEERING_TOOLS.md`. Mark it Reviewed/Verified, enter the exact service scope and one `key = value` parameter, then try a matching, differing, missing and out-of-scope value. Confirm the report labels these as text checks and never a compliance verdict.
+12. Open **Engineering Agent**, run each workflow with matching task wording, inspect the selected tool and evidence IDs, and reopen the matching local history entries. Try a mismatched task and confirm it stops without a conclusion.
 
 - [ ] Explorer multi-hop path.
 - [ ] Source/claim provenance.
 - [ ] Explore and Back.
 - [ ] Material comparison.
 - [ ] Why path.
-- [ ] Assessment boundary and out-of-scope behavior.
-- [ ] Report export.
+- [ ] Five engineering workflows, scoped-rule matching and conflict handling.
+- [ ] Vendor/failure user-input attribution and local history.
+- [ ] Fit-for-purpose text match, mismatch, missing, and out-of-scope behavior.
+- [ ] Agent workflow routing, evidence IDs, mismatch stop, and audit history.
+- [ ] Report export for each workflow.
 
 ## 7. Engineering Agent walkthrough
 
-Use a reviewed synthetic rule and synthetic material only.
+Use reviewed synthetic rules and synthetic records only.
 
 1. Open **Engineering Agent**.
-2. Enter a short request such as `screen TEST-Material-001 for TEST-Mechanism-001`.
-3. Select the material/component and enter the structured environment, temperature, and pressure fields.
-4. Run once with explanation disabled.
-5. Confirm the report contains tools, evidence, sources, gaps, assumptions, and Why links.
-6. Export the report and reopen Agent history. Confirm the run remains available after relaunch.
-7. Run an unsupported request. Confirm the app stops without an engineering conclusion.
-8. Switch to Research mode. Confirm it produces a research brief/handoff only; it must not browse or silently change knowledge.
-9. On a model-ready Mac, repeat with explanation enabled. Confirm the explanation is labelled as local model inference and its citation IDs resolve.
+2. Select a workflow and enter a matching request; for degradation, use `screen TEST-Material-001 for TEST-Mechanism-001`.
+3. Complete its structured fields. For material comparison, vendor qualification, failure investigation and fit-for-purpose, use the corresponding forms and source-backed records.
+4. Run once with explanation disabled. Confirm the report contains tools, evidence, sources, gaps, assumptions, and claim links.
+5. Export the report and reopen Agent history. Confirm the structured request remains available after relaunch.
+6. Enter a task that does not match the selected workflow. Confirm the app stops without an engineering conclusion.
+7. Switch to Research mode. Confirm it produces a research brief/handoff only; it must not browse or silently change knowledge.
+8. On a model-ready Mac, repeat with explanation enabled. Confirm the explanation is labelled as local model inference and its citation IDs resolve.
 
 - [ ] Bounded assessment run.
 - [ ] Evidence and citation inspection.
@@ -242,4 +245,4 @@ For each failed or blocked item, record:
 - Exact error text
 - Screenshot or exported report path, if available
 
-The roadmap is ready for full operational acceptance only after the GUI/file/model checks pass and the signed iCloud/device checks are completed. Claim timestamp preservation found in the earlier audit has been corrected and regression-tested; this checklist does not replace the signed iCloud/device acceptance.
+Full operational acceptance requires the GUI, file, and model checks plus signed iCloud/device checks. Claim timestamp preservation is corrected and covered by regression checks; this guide still requires a real signed device/account transfer.

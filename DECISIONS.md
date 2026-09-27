@@ -1,5 +1,9 @@
 # Architectural Decisions
 
+## 2026-09-27 — Materials Intelligence brand mark and About access
+
+Use one restrained teal crystal-and-node mark for the macOS app icon and SwiftUI sidebar identity, matching the existing accent color. Add About as a native page exposed in the toolbar, sidebar, and standard app menu so product/version details are reachable through both workspace navigation and macOS conventions. This keeps branding in native assets and SwiftUI without adding a dependency or changing engineering data behavior.
+
 ## 2026-09-27 — Native SwiftUI macOS foundation
 
 Use a native SwiftUI macOS application with a small Xcode project and no third-party dependencies. This follows the project’s local-first Apple direction, keeps the foundation buildable, and avoids committing to web or service infrastructure prematurely.
@@ -95,3 +99,7 @@ Use a fixed bounded orchestrator rather than arbitrary autonomous model tool cal
 ## 2026-09-27 — Flat macOS Personal Vault reference pane
 
 Keep the app's main `NavigationSplitView`, but render the macOS Personal Vault Reference tab as a native list/detail HStack. Live accessibility navigation reproduced the workspace sidebar disappearing after the nested Reference split view was visited and then exited at compact width. Flattening only this Mac presentation removes the competing split-view lifecycle while preserving the iOS adaptive `NavigationSplitView`, shared store, tab model and native controls.
+
+## 2026-09-27 — Complete Phase 8 workflows over existing evidence services
+
+Implement material comparison, vendor qualification, failure investigation and fit-for-purpose review beside degradation screening, and route them through the fixed Phase 10 agent. Reuse the current graph, FTS, source-linked claims, and schema-6 local agent-run snapshots instead of adding a second engineering database or migration. New deterministic rules must be explicitly authored with source provenance and pass exact-scope checks from Reviewed/Verified claims. Keep outputs as evidence reviews or user-provided records where the repository has no typed property/qualification data; do not synthesize ranking, vendor approval, failure cause, or code compliance.

@@ -38,21 +38,27 @@ struct ResearchPage: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Label("Research", systemImage: "doc.badge.plus").font(.title2.bold())
+            HStack(alignment: .center, spacing: MITheme.Space.panel) {
+                PageHeader(title: "Research", subtitle: "Review structured engineering proposals before they enter local knowledge.")
                 Spacer()
                 Button("Import JSON…", systemImage: "plus") { importer = true }.buttonStyle(.borderedProminent)
-            }.padding()
+            }
+            .padding(.horizontal, MITheme.Space.inset)
+            .padding(.vertical, MITheme.Space.panel)
             Divider()
             HStack(spacing: 0) {
-                sidebar.frame(width: 220)
+                sidebar.frame(width: 230)
                 Divider()
                 if section == 5 { history }
                 else if let selected { workspace(selected) }
                 else { ContentUnavailableView("No research package", systemImage: "doc.badge.plus", description: Text("Import a structured JSON package to review it locally.")) }
             }
-            if selected != nil && section != 5 { Divider(); bottomBar.padding() }
+            if selected != nil && section != 5 {
+                Divider()
+                bottomBar.padding(.horizontal, MITheme.Space.inset).padding(.vertical, MITheme.Space.regular)
+            }
         }
+        .background(MITheme.canvas)
         .task { reload() }
         .fileImporter(isPresented: $importer, allowedContentTypes: [.json]) { importPackage($0) }
         .alert("Research error", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
@@ -70,37 +76,38 @@ struct ResearchPage: View {
     }
 
     private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text("PACKAGES").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: MITheme.Space.compact) {
+            Text("PACKAGES").font(MITheme.Typography.metadata.weight(.semibold)).foregroundStyle(.secondary)
             ForEach(sessions.filter { $0.status == "staged" }) { session in
                 Button { selectedID = session.id; section = 0 } label: {
-                    VStack(alignment: .leading) { Text(session.package.topic).lineLimit(2); Text(session.package.boundary).font(.caption2).foregroundStyle(.secondary) }
+                    VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(session.package.topic).font(MITheme.Typography.supporting.weight(.medium)).lineLimit(2); Text(session.package.boundary).font(MITheme.Typography.metadata).foregroundStyle(.secondary) }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                }.buttonStyle(.plain).padding(7).background(selectedID == session.id ? Color.accentColor.opacity(0.13) : .clear, in: RoundedRectangle(cornerRadius: 7))
+                }.buttonStyle(.plain).padding(MITheme.Space.compact).background(selectedID == session.id ? MITheme.selected : .clear, in: RoundedRectangle(cornerRadius: MITheme.Radius.selection, style: .continuous))
             }
-            Divider().padding(.vertical, 6)
+            Divider().padding(.vertical, MITheme.Space.compact)
             ForEach(Array(["Overview", "Entities", "Claims", "Relationships", "Sources", "History"].enumerated()), id: \.offset) { index, title in
                 Button(title) { section = index }.buttonStyle(.plain).frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(7).background(section == index ? Color.accentColor.opacity(0.13) : .clear, in: RoundedRectangle(cornerRadius: 7))
+                    .font(MITheme.Typography.supporting)
+                    .padding(MITheme.Space.compact).background(section == index ? MITheme.selected : .clear, in: RoundedRectangle(cornerRadius: MITheme.Radius.selection, style: .continuous))
             }
             Spacer()
-            Label("Local staging · no network", systemImage: "internaldrive").font(.caption).foregroundStyle(.secondary)
-        }.padding(12).background(Color(nsColor: .underPageBackgroundColor))
+            Label("Local staging · no network", systemImage: "internaldrive").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
+        }.padding(MITheme.Space.regular).background(MITheme.sidebar)
     }
 
     private func workspace(_ session: ResearchSession) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: MITheme.Space.page) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading) {
-                        Text(session.package.topic).font(.largeTitle.bold())
+                        Text(session.package.topic).font(MITheme.Typography.pageTitle)
                         Text("Package \(session.package.packageID) · \(session.package.boundary) · \(session.status.capitalized)")
-                            .foregroundStyle(.secondary).textSelection(.enabled)
+                            .font(MITheme.Typography.supporting).foregroundStyle(.secondary).textSelection(.enabled)
                     }
                     Spacer()
                     Button("Export original…") { exportOriginal(session) }
                 }
-                if let failure = session.lastError { Label(failure, systemImage: "exclamationmark.triangle").foregroundStyle(.red).textSelection(.enabled) }
+                if let failure = session.lastError { Label(failure, systemImage: "exclamationmark.triangle").foregroundStyle(MITheme.danger).textSelection(.enabled) }
                 if section == 0 {
                     Text(session.package.summary ?? "No summary supplied.")
                     Text("\(session.package.entities.count) entities · \(session.package.claims.count) claims · \(session.package.relationships.count) relationships")
@@ -108,30 +115,31 @@ struct ResearchPage: View {
                         .foregroundStyle(.secondary)
                     Button("Review entities") { section = 1 }.buttonStyle(.borderedProminent)
                 } else {
-                    Text(["", "Proposed entities", "Proposed claims", "Proposed relationships", "Proposed sources"][section]).font(.title2.bold())
+                    Text(["", "Proposed entities", "Proposed claims", "Proposed relationships", "Proposed sources"][section]).font(MITheme.Typography.sectionTitle)
                     ForEach(visibleItems) { item in proposal(item, session: session) }
                     if visibleItems.isEmpty { Text("No proposals in this section.").foregroundStyle(.secondary) }
                 }
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(24)
+            }.font(MITheme.Typography.body).frame(maxWidth: .infinity, alignment: .leading).padding(MITheme.Space.inset)
         }
     }
 
     private func proposal(_ item: ProposalItem, session: ResearchSession) -> some View {
         let review = session.reviews[item.id] ?? ResearchReview()
         let matches = (try? store.researchMatches(session.package, itemID: item.id)) ?? []
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack { Text("\(item.type.uppercased()) · \(item.id)").font(.caption.bold()).foregroundStyle(.secondary); Spacer(); Text(review.decision.rawValue.capitalized).font(.caption.bold()) }
-            Text(item.title).font(.headline).textSelection(.enabled)
-            if !item.detail.isEmpty { Text(item.detail).font(.callout).foregroundStyle(.secondary).textSelection(.enabled) }
-            if let target = review.targetID { Text("Reuses existing ID: \(target)").font(.caption).textSelection(.enabled) }
-            if let result = session.results[item.id] { Text("Committed ID: \(result)").font(.caption).textSelection(.enabled) }
+        return Panel {
+            VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+            HStack { Text("\(item.type.uppercased()) · \(item.id)").font(MITheme.Typography.metadata.weight(.semibold)).foregroundStyle(.secondary); Spacer(); Text(review.decision.rawValue.capitalized).font(MITheme.Typography.metadata.weight(.semibold)).foregroundStyle(MITheme.accent) }
+            Text(item.title).font(MITheme.Typography.sectionTitle).textSelection(.enabled)
+            if !item.detail.isEmpty { Text(item.detail).font(MITheme.Typography.supporting).foregroundStyle(.secondary).textSelection(.enabled) }
+            if let target = review.targetID { Text("Reuses existing ID: \(target)").font(MITheme.Typography.metadata).textSelection(.enabled) }
+            if let result = session.results[item.id] { Text("Committed ID: \(result)").font(MITheme.Typography.metadata).textSelection(.enabled) }
             ForEach(matches) { match in
                 HStack(alignment: .top) {
-                    Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
-                    VStack(alignment: .leading) { Text(match.title).font(.callout.bold()); Text(match.reason).font(.caption); Text("Existing ID: \(match.id)").font(.caption2).textSelection(.enabled) }
+                    Image(systemName: "exclamationmark.triangle").foregroundStyle(MITheme.caution)
+                    VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(match.title).font(MITheme.Typography.supporting.weight(.semibold)); Text(match.reason).font(MITheme.Typography.metadata); Text("Existing ID: \(match.id)").font(MITheme.Typography.metadata).textSelection(.enabled) }
                     Spacer()
                     if staged && match.canMerge { Button("Reuse") { decide(item.id, .merge, target: match.id) }.buttonStyle(.bordered) }
-                }.padding(8).background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 7))
+                }.padding(MITheme.Space.compact).background(MITheme.caution.opacity(0.08), in: RoundedRectangle(cornerRadius: MITheme.Radius.control, style: .continuous))
             }
             if staged {
                 HStack {
@@ -141,27 +149,27 @@ struct ResearchPage: View {
                     Button("Reset") { decide(item.id, .pending) }.buttonStyle(.bordered)
                 }
             }
-        }.padding(15).frame(maxWidth: .infinity, alignment: .leading).background(.background, in: RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(.quaternary))
+            }
+        }
     }
 
     private var history: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Import history").font(.largeTitle.bold())
+            VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+                Text("Import history").font(MITheme.Typography.pageTitle)
                 ForEach(sessions) { session in
                     Button { selectedID = session.id; section = 0 } label: {
-                        HStack { VStack(alignment: .leading) { Text(session.package.topic).font(.headline); Text("\(session.package.packageID) · \(session.importedAt) · \(session.results.count) result IDs").font(.caption).foregroundStyle(.secondary) }; Spacer(); Text(session.status.capitalized) }
-                            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                    }.buttonStyle(.plain).background(.background, in: RoundedRectangle(cornerRadius: 8))
+                        HStack { VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(session.package.topic).font(MITheme.Typography.sectionTitle); Text("\(session.package.packageID) · \(session.importedAt) · \(session.results.count) result IDs").font(MITheme.Typography.metadata).foregroundStyle(.secondary) }; Spacer(); Text(session.status.capitalized).font(MITheme.Typography.metadata.weight(.semibold)) }
+                            .padding(MITheme.Space.regular).frame(maxWidth: .infinity, alignment: .leading)
+                    }.buttonStyle(.plain).background(MITheme.surface, in: RoundedRectangle(cornerRadius: MITheme.Radius.panel, style: .continuous)).overlay(RoundedRectangle(cornerRadius: MITheme.Radius.panel, style: .continuous).stroke(MITheme.separator, lineWidth: 0.7))
                 }
-            }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
+            }.padding(MITheme.Space.inset).frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     private var bottomBar: some View {
         HStack {
-            Text("\(approved) approved · \(selected?.package.boundary ?? "")").font(.caption).foregroundStyle(.secondary)
+            Text("\(approved) approved · \(selected?.package.boundary ?? "")").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
             Spacer()
             Button("Cancel import") { cancelAlert = true }.disabled(!staged)
             Button("Commit approved changes") { commitAlert = true }.buttonStyle(.borderedProminent).disabled(!staged || approved == 0)
@@ -169,15 +177,15 @@ struct ResearchPage: View {
     }
 
     private var editor: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Edit package JSON").font(.title2.bold())
+        VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+            Text("Edit package JSON").font(MITheme.Typography.pageTitle)
             Text("Editing proposal \(editItemID). Save validates the whole package and resets all decisions because dependencies may have changed.")
                 .foregroundStyle(.secondary)
             TextEditor(text: $editedJSON).font(.system(.body, design: .monospaced)).frame(minWidth: 650, minHeight: 430)
             HStack { Spacer(); Button("Cancel") { editing = false }; Button("Save changes") {
                 perform { _ = try store.editResearch(requireSelected(), data: Data(editedJSON.utf8)); reload(); editing = false }
             }.buttonStyle(.borderedProminent) }
-        }.padding(20)
+        }.font(MITheme.Typography.body).padding(MITheme.Space.inset)
     }
 
     private func requireSelected() throws -> ResearchSession {

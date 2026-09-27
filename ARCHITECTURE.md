@@ -10,7 +10,9 @@ The database resides in `Application Support/MaterialsIntelligence/knowledge.sql
 
 ## UI and lifecycle
 
-The primary `NavigationSplitView` contains Overview, Ask, Search, Research, Library, Materials, Damage Mechanisms, Standards, Components, Sources, Claims, Relationships, and Settings. Ask provides Phase 5 local answering when the on-device model is available. Record and claim forms update existing stable IDs. Claims can move through all six states, including archive without erasing provenance. Relationship creation optionally cites a claim; removal requires confirmation and leaves its records/claim intact. Record, claim, and Library deletions require confirmation. References that would be orphaned block deletion and the UI explains the dependency.
+The primary `NavigationSplitView` contains Overview, Ask, Search, Research, Library, Materials, Damage Mechanisms, Standards, Components, Sources, Claims, Relationships, Engineering Tools, Engineering Agent, Personal Vault, Settings, and About. About is reachable from the native toolbar, app menu, and sidebar; the app icon and sidebar use the same geometric brand mark. Ask provides Phase 5 local answering when the on-device model is available. Record and claim forms update existing stable IDs. Claims can move through all six states, including archive without erasing provenance. Relationship creation optionally cites a claim; removal requires confirmation and leaves its records/claim intact. Record, claim, and Library deletions require confirmation. References that would be orphaned block deletion and the UI explains the dependency.
+
+`UI/DesignSystem.swift` centralizes the shared macOS/iOS palette, semantic status and record colors, spacing and corner-radius scales, typography, page headers, section titles, status badges, and panels. Platform-specific canvas and surface colors retain native appearance; screens use the same tokens and reusable components so their spacing and visual hierarchy stay aligned.
 
 ## Search
 
@@ -40,11 +42,11 @@ Approved dependencies must also be explicitly accepted or reused. An outer savep
 
 ## Phase 7 graph
 
-`KnowledgeGraph` creates a transient indexed snapshot from the existing repository. No second persistence layer or schema is introduced. `GraphPage` presents bounded BFS paths, exact edge/claim provenance and generic comparisons using existing UI primitives. See `PHASE_7_CHECKPOINT.md` for derivation, ranking, status and limit semantics.
+`KnowledgeGraph` creates a transient indexed snapshot from the existing repository. No second persistence layer or schema is introduced. `GraphPage` presents bounded BFS paths, exact edge/claim provenance and generic comparisons using existing UI primitives. Stored relationships retain their original direction; reverse browsing makes no reverse engineering assertion. Active claims derive subject-to-source edges identified by claim ID, while archived or superseded claims derive none. Traversal selects shortest paths with stable edge-ID ties, depth 0–6, a 500-result service cap and a 100-result UI cap; truncation is visible. Comparison preserves stored narrative and citations without normalizing quantities or ranking suitability.
 
 ## Phase 8 engineering tools
 
-`AssessmentInput`, `DegradationReport`, and `DegradationAssessment` form a small reusable workflow boundary. Rules are source-backed existing claims, not a parallel rule store. Deterministic screening and optional local explanation are separate. `AssessmentPage` uses existing native design components and exports text. See `ENGINEERING_TOOLS.md` for the rule contract.
+`EngineeringWorkflowInput`, `EngineeringWorkflowAssessment`, and `EngineeringWorkflowResult` expose material comparison, degradation, vendor qualification, failure investigation, and fit-for-purpose evidence review. Each service reuses `KnowledgeGraph`, `KnowledgeStore.search`, and source-backed claim IDs. Deterministic scoped rules remain stored in claims, not a parallel rule table. Material-selection scope rules and fit-for-purpose text requirements execute only from Reviewed/Verified claims. The other workflows preserve structured user input and local evidence without claiming vendor approval, failure cause, material ranking, or compliance. `AssessmentPage` uses native form controls and writes auditable snapshots through the existing agent history. See `ENGINEERING_TOOLS.md` for rule contracts and limits.
 
 ## Phase 9 shared targets and opt-in vault
 
@@ -52,4 +54,4 @@ The universal iPhone/iPad target shares existing non-AppKit source files; no dup
 
 ## Phase 10 controlled orchestration
 
-EngineeringAgent uses a fixed explicit tool sequence over existing record/FTS/graph/assessment services. Natural-language intent and exact stored names identify the bounded workflow; structured fields control conditions. Optional local explanation remains separate. Schema 6 stores task/audit snapshots; these never enter FTS or personal sync. Research mode only creates a handoff brief, retaining Phase 6 as the sole researched-knowledge ingestion gate. See ENGINEERING_AGENT.md.
+EngineeringAgent uses a fixed explicit tool sequence over existing record/FTS/graph/evidence services and all five Phase 8 workflows. Structured fields control conditions; task prose cannot supply hidden numeric inputs. Optional local explanation remains separate. Schema 6 stores task, structured-input, report, and audit snapshots; these never enter FTS or personal sync. Optional workflow fields decode older history snapshots. Research mode only creates a handoff brief, retaining Phase 6 as the sole researched-knowledge ingestion gate. See `ENGINEERING_AGENT.md`.

@@ -1,4 +1,4 @@
 import SwiftUI
 @main struct MaterialsIntelligenceMobileApp: App {
-    var body: some Scene { WindowGroup { PersonalVaultLauncher() } }
+    var body: some Scene { WindowGroup { PersonalVaultLauncher().tint(MITheme.accent) } }
 }

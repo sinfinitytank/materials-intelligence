@@ -1,15 +1,18 @@
 # Manual Acceptance Remaining — 2026-09-27
 
-Automated coverage is recorded in [FINAL_ACCEPTANCE_REPORT.md](FINAL_ACCEPTANCE_REPORT.md). Mark each item PASS, FAIL, or BLOCKED with the device, OS/Xcode version and a short note. Use synthetic, non-sensitive data only. Do not treat a build or accessibility route sweep as visual or engineering acceptance.
+Automated coverage is summarized in [CURRENT_STATE.md](CURRENT_STATE.md). Mark each item PASS, FAIL, or BLOCKED with the device, OS/Xcode version and a short note. Use synthetic, non-sensitive data only. Do not treat a build or accessibility route sweep as visual or engineering acceptance.
 
 ## macOS visual and accessibility review
 
-- [ ] Capture the actual app at the reference window sizes and compare against the UI sketches. Check clipping, hierarchy, spacing, contrast, empty states, scrolling, and overflow controls.
-- [ ] Review Light and Dark appearance on Overview, records, Library, Research, Claims, Relationships, Explorer, Assessment, Agent and all Personal Vault tabs.
+- [ ] Inspect the actual app at representative window sizes. Check clipping, hierarchy, spacing, contrast, empty states, scrolling, and overflow controls against the current native design system.
+- [ ] Review Light and Dark appearance on Overview, records, Library, Research, Claims, Relationships, Explorer, all five Engineering Tools workflows, Engineering Agent and all Personal Vault tabs.
 - [ ] Complete keyboard-only navigation, focus order, Return/Space actions, and VoiceOver labels/announcements.
 - [ ] Walk through record, claim, relationship and deletion flows using synthetic data; confirm content persists after relaunch and guarded deletion remains clear.
 - [ ] Import a synthetic research fixture, inspect proposals, accept/reject/reuse/edit, cancel one session, then commit another and inspect history/search results.
-- [ ] Run Explorer/Why/comparison, a bounded degradation assessment/report export, and the Engineering Agent deterministic workflow, history and Research handoff from the live app.
+- [ ] Run material comparison and verify exact-scope consideration/exclusion/conflict rules; run degradation matching/out-of-scope assessment and export.
+- [ ] Run vendor qualification and failure investigation with synthetic data; verify user-input attribution, source context, history, and exports.
+- [ ] Run fit-for-purpose matching/differing/missing/out-of-scope text checks using a Reviewed/Verified source-backed requirement; verify it never emits a compliance verdict.
+- [ ] Run all five workflows through Engineering Agent, inspect tool routing and evidence links, reopen structured history, test a task/workflow mismatch, and exercise Research handoff.
 
 Use the detailed steps in [MANUAL_VERIFICATION_GUIDE.md](MANUAL_VERIFICATION_GUIDE.md). The automated UI harness already covers window mechanics, navigation routes, Private Vault tab switching, its reference editor open/cancel flow, sync status/consent lifecycle, and close/reopen.
 

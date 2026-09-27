@@ -11,6 +11,7 @@ Use it as a structured research notebook. It is not an engineering approval syst
 3. The app opens the local workspace. Your main knowledge database remains on this Mac.
 
 The app does not require an iCloud account for normal local use.
+Open **About** from the top toolbar or the **Materials Intelligence** app menu to view the app version, platform, and local-first data details.
 
 ## Main workspace
 
@@ -24,8 +25,8 @@ Use the sidebar to open:
 - **Library** — associate local files with records. Files and bookmarks remain device-local.
 - **Research** — import and review versioned JSON research packages before committing them.
 - **Explorer** — follow stored relationships and inspect Why paths.
-- **Engineering Tools** — run the bounded degradation-screening workflow against stored rules.
-- **Engineering Agent** — run the controlled local workflow, inspect evidence and gaps, and save an audit history.
+- **Engineering Tools** — compare materials; screen degradation; record vendor qualifications and failure investigations; and review fit-for-purpose evidence.
+- **Engineering Agent** — run those bounded workflows, inspect tools/evidence/gaps, and reopen local audit history.
 - **Personal Vault** — work with the separate personal/public vault intended for explicit sync.
 
 ## Recommended working pattern
@@ -93,11 +94,13 @@ Use the claim as supporting evidence for the first relationship if the form offe
 5. Use **Why** on the claim to inspect its stored evidence path.
 6. Use **Search** for `DEMO-ALLOY-001` and confirm the claim and related records appear.
 
-### Optional local tools test
+### Optional local tools walkthrough
 
-Open **Engineering Tools** and use the synthetic records only. If the app reports missing inputs or unsupported conditions, that is expected behavior for data without a complete stored rule set.
+Open **Engineering Tools** and choose a workflow. Material comparison needs two stored candidate records. Degradation assessment needs a Reviewed/Verified `assessment_rule` claim for an explicit scoped conclusion. Vendor qualification and failure investigation capture submitted information and show related local evidence. Fit-for-purpose can compare a value with an explicit Reviewed/Verified rule. See [ENGINEERING_TOOLS.md](ENGINEERING_TOOLS.md) for the rule formats.
 
-Open **Engineering Agent** and run a small synthetic request. Inspect the selected tools, evidence IDs, gaps, and saved history. Do not mark the output as engineering advice.
+Every workflow stores its structured input and report in local history. Inspect claim statuses, sources, locators, conditions, and missing information. Exclusion rules apply only to their exact stored scope; they are never a general safety or compliance approval. Use synthetic data for the demo. Do not treat the report as engineering advice.
+
+Open **Engineering Agent** to run the same workflow set through the bounded tool sequence. Optional explanation uses Apple on-device Foundation Models only and remains unverified inference. Research mode prepares a brief; it does not browse or ingest results automatically.
 
 ## Personal Vault and Sync
 

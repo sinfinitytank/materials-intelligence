@@ -14,9 +14,9 @@ struct GraphPage: View {
     private var records: [KnowledgeRecord] { graph?.records.values.sorted { ($0.name, $0.id) < ($1.name, $1.id) } ?? [] }
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: MITheme.Space.panel) {
                 PageHeader(title: "Knowledge Explorer", subtitle: "Stored relationships, evidence paths, and structured comparison")
-                if !error.isEmpty { Text(error).foregroundStyle(.red) }
+                if !error.isEmpty { Text(error).foregroundStyle(MITheme.danger) }
                 if let graph {
                     HStack {
                         Picker("Start", selection: $root) { Text("Select record").tag(""); ForEach(records) { Text($0.name).tag($0.id) } }
@@ -24,46 +24,46 @@ struct GraphPage: View {
                         Button("Back") { if let prior = history.popLast() { root = prior } }.disabled(history.isEmpty)
                     }
                     if let claimID, let claim = graph.claims[claimID] {
-                        Panel { VStack(alignment: .leading, spacing: 8) { Text("Why? Starting claim").font(.headline); evidence(claim, graph: graph); Text("Follow only recorded context below. Missing mechanism or metallurgy links are not inferred.").foregroundStyle(.secondary) } }
+                        Panel { VStack(alignment: .leading, spacing: MITheme.Space.compact) { Text("Why? Starting claim").font(MITheme.Typography.sectionTitle); evidence(claim, graph: graph); Text("Follow only recorded context below. Missing mechanism or metallurgy links are not inferred.").foregroundStyle(.secondary) } }
                     }
                     if let record = graph.records[root] {
-                        Panel { VStack(alignment: .leading, spacing: 8) { Text(record.name).font(.title2); Text(record.detail); recordButton(record); Text("Related records · shortest paths").font(.headline)
+                        Panel { VStack(alignment: .leading, spacing: MITheme.Space.compact) { Text(record.name).font(MITheme.Typography.pageTitle); Text(record.detail); recordButton(record); Text("Related records · shortest paths").font(MITheme.Typography.sectionTitle)
                             let traversal = graph.traverse(from: root, depth: depth)
                             if traversal.paths.isEmpty { Text("No recorded relationships at this depth.").foregroundStyle(.secondary) }
                             ForEach(traversal.paths) { path in
                                 DisclosureGroup {
                                     ForEach(path.edges) { edge in
-                                        VStack(alignment: .leading, spacing: 6) {
+                                        VStack(alignment: .leading, spacing: MITheme.Space.tight) {
                                             Text("\(graph.records[edge.from]?.name ?? edge.from) → \(edge.predicate) → \(graph.records[edge.to]?.name ?? edge.to)")
-                                            Text(edge.derived ? "Derived from a stored claim's source reference" : "Stored relationship · \(edge.id)").font(.caption).foregroundStyle(.secondary)
+                                            Text(edge.derived ? "Derived from a stored claim's source reference" : "Stored relationship · \(edge.id)").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
                                             if let id = edge.claimID, let claim = graph.claims[id] { evidence(claim, graph: graph) }
-                                            else { Text("No supporting claim recorded; relationship is not verified evidence.").foregroundStyle(.orange) }
-                                        }.padding(.vertical, 6)
+                                            else { Text("No supporting claim recorded; relationship is not verified evidence.").foregroundStyle(MITheme.caution) }
+                                        }.padding(.vertical, MITheme.Space.compact)
                                     }
                                 } label: {
                                     HStack { Text(path.recordIDs.compactMap { graph.records[$0]?.name }.joined(separator: " → ")); Spacer(); Button("Explore") { history.append(root); root = path.id } }
                                 }
                             }
-                            if traversal.truncated { Text("Traversal bounded by depth or 100 records. Explore a related record to continue.").font(.caption).foregroundStyle(.orange) }
+                            if traversal.truncated { Text("Traversal bounded by depth or 100 records. Explore a related record to continue.").font(MITheme.Typography.metadata).foregroundStyle(MITheme.caution) }
                         } }
-                        Panel { VStack(alignment: .leading, spacing: 10) {
-                            Text("Compare stored knowledge").font(.headline)
+                        Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+                            Text("Compare stored knowledge").font(MITheme.Typography.sectionTitle)
                             Picker("Compare with", selection: $comparison) { Text("Select record").tag(""); ForEach(records.filter { $0.kind == record.kind && $0.id != root }) { Text($0.name).tag($0.id) } }
                             if !comparison.isEmpty {
-                                HStack(alignment: .top, spacing: 20) {
+                                HStack(alignment: .top, spacing: MITheme.Space.page) {
                                     ForEach(graph.compare([root, comparison]), id: \.record.id) { column in
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            Text(column.record.name).font(.title3.bold()); Text(column.record.secondary); Text(column.record.detail)
-                                            Text("Claims / properties").font(.headline)
+                                        VStack(alignment: .leading, spacing: MITheme.Space.compact) {
+                                            Text(column.record.name).font(MITheme.Typography.sectionTitle); Text(column.record.secondary); Text(column.record.detail)
+                                            Text("Claims / properties").font(MITheme.Typography.sectionTitle)
                                             if column.claims.isEmpty { Text("No claims recorded") }
-                                            ForEach(column.claims) { claim in Text(claim.predicate).font(.subheadline.bold()); evidence(claim, graph: graph) }
-                                            Text("Direct standards").font(.headline)
+                                            ForEach(column.claims) { claim in Text(claim.predicate).font(MITheme.Typography.supporting.weight(.semibold)); evidence(claim, graph: graph) }
+                                            Text("Direct standards").font(MITheme.Typography.sectionTitle)
                                             ForEach(column.standards) { recordButton($0) }
-                                            Text("\(column.links.count) relationships · \(column.sources.count) sources").font(.caption)
+                                            Text("\(column.links.count) relationships · \(column.sources.count) sources").font(MITheme.Typography.metadata)
                                         }.frame(maxWidth: .infinity, alignment: .topLeading)
                                     }
                                 }
-                                Text("Missing fields are unknown, not equivalent. Narrative properties are shown verbatim; no numeric normalization or suitability ranking.").font(.caption).foregroundStyle(.secondary)
+                                Text("Missing fields are unknown, not equivalent. Narrative properties are shown verbatim; no numeric normalization or suitability ranking.").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
                             }
                         } }
                     }
@@ -76,10 +76,10 @@ struct GraphPage: View {
         else { Button(record.name) { history.append(root); root = record.id } }
     }
     private func evidence(_ claim: EngineeringClaim, graph: KnowledgeGraph) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(claim.statement); Text("\(claim.status.title) · \(claim.evidenceLevel) · \(claim.conditions)").font(.caption).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: MITheme.Space.tight) {
+            Text(claim.statement); Text("\(claim.status.title) · \(claim.evidenceLevel) · \(claim.conditions)").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
             if let source = graph.records[claim.sourceID] { recordButton(source) }
-            Text("\(claim.locator) · Claim \(claim.id)").font(.caption2).textSelection(.enabled)
+            Text("\(claim.locator) · Claim \(claim.id)").font(MITheme.Typography.metadata).textSelection(.enabled)
             if let openResult { Button("Open claim") { openResult(SearchResult(id: claim.id, entityType: .claim, title: claim.statement, detail: "", kind: "", score: 0)) } }
         }
     }
@@ -91,5 +91,5 @@ struct RelatedKnowledgeButton: View {
     let recordID: String
     var claimID: String? = nil
     @State private var showing = false
-    var body: some View { Button(claimID == nil ? "Explore related knowledge / Compare" : "Why? Explore evidence path") { showing = true }.sheet(isPresented: $showing) { VStack { HStack { Spacer(); Button("Done") { showing = false } }.padding(); GraphPage(store: store, initialID: recordID, claimID: claimID) }.frame(minWidth: 800, minHeight: 600) } }
+    var body: some View { Button(claimID == nil ? "Explore related knowledge / Compare" : "Why? Explore evidence path") { showing = true }.sheet(isPresented: $showing) { VStack { HStack { Spacer(); Button("Done") { showing = false } }.padding(MITheme.Space.panel); GraphPage(store: store, initialID: recordID, claimID: claimID) }.frame(minWidth: 800, minHeight: 600) } }
 }

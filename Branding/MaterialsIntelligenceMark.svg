@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title">
+  <title id="title">Materials Intelligence mark</title>
+  <rect width="1024" height="1024" fill="#216173"/>
+  <g fill="none" stroke="#F5FAF9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M512 174 809 343v338L512 850 215 681V343z" stroke-width="38"/>
+    <g opacity=".76" stroke-width="29">
+      <path d="M512 512 512 174M512 512 809 343M512 512 809 681M512 512 512 850M512 512 215 681M512 512 215 343"/>
+    </g>
+  </g>
+  <circle cx="512" cy="512" r="61" fill="#B3DED1"/>
+</svg>

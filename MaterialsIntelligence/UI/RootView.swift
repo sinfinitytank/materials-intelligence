@@ -1,39 +1,78 @@
 import SwiftUI
 import AppKit
 
-enum AppSection: String, CaseIterable, Identifiable { case agent, personalVault, assessment, explorer, overview, ask, search, library, research, materials, mechanisms, standards, components, sources, claims, relationships, settings
- var id: Self { self }; var title: String { switch self { case .agent:"Engineering Agent"; case .personalVault:"Personal Vault"; case .assessment:"Engineering Tools"; case .explorer:"Explorer"; case .overview:"Overview"; case .ask:"Ask"; case .search:"Search"; case .library:"Library"; case .research:"Research"; case .materials:"Materials"; case .mechanisms:"Damage Mechanisms"; case .standards:"Standards"; case .components:"Components"; case .sources:"Sources"; case .claims:"Claims"; case .relationships:"Relationships"; case .settings:"Settings" } }
+enum AppSection: String, CaseIterable, Identifiable { case agent, personalVault, assessment, explorer, overview, ask, search, library, research, materials, mechanisms, standards, components, sources, claims, relationships, settings, about
+ var id: Self { self }; var title: String { switch self { case .agent:"Engineering Agent"; case .personalVault:"Personal Vault"; case .assessment:"Engineering Tools"; case .explorer:"Explorer"; case .overview:"Overview"; case .ask:"Ask"; case .search:"Search"; case .library:"Library"; case .research:"Research"; case .materials:"Materials"; case .mechanisms:"Damage Mechanisms"; case .standards:"Standards"; case .components:"Components"; case .sources:"Sources"; case .claims:"Claims"; case .relationships:"Relationships"; case .settings:"Settings"; case .about:"About" } }
  var kind: RecordKind? { switch self { case .materials:.material; case .mechanisms:.mechanism; case .standards:.standard; case .components:.component; case .sources:.source; default:nil } }
 }
 
-struct RootView: View { @State private var selection: AppSection? = .overview; @State private var store: KnowledgeStore?; @State private var error: String?; @State private var refresh = UUID(); @State private var targetID: String?
- var body: some View { NavigationSplitView { Sidebar(selection: $selection) } detail: { if let selection { Page(section: selection, store: store, refresh: $refresh, targetID: $targetID, error: error, openResult: openResult, navigate: navigate).accessibilityIdentifier("workspace.page.\(selection.rawValue)") } }.navigationSplitViewStyle(.balanced).frame(minWidth: 1040, minHeight: 680).tint(MITheme.accent).task { do { let s = try KnowledgeStore(url: try KnowledgeStore.applicationURL()); try s.seedIfEmpty(); store=s } catch let caught { error=caught.localizedDescription } } }
+struct RootView: View { @Binding var selection: AppSection?; @State private var store: KnowledgeStore?; @State private var error: String?; @State private var refresh = UUID(); @State private var targetID: String?
+ var body: some View { NavigationSplitView { Sidebar(selection: $selection) } detail: { if let selection { Page(section: selection, store: store, refresh: $refresh, targetID: $targetID, error: error, openResult: openResult, navigate: navigate).accessibilityIdentifier("workspace.page.\(selection.rawValue)") } }.navigationSplitViewStyle(.balanced).frame(minWidth: 1040, minHeight: 680).tint(MITheme.accent).toolbar { ToolbarItem(placement: .primaryAction) { Button { selection = .about } label: { Label("About", systemImage: "info.circle") }.accessibilityIdentifier("toolbar.about") } }.task { do { let s = try KnowledgeStore(url: try KnowledgeStore.applicationURL()); try s.seedIfEmpty(); store=s } catch let caught { error=caught.localizedDescription } } }
  private func openResult(_ result: SearchResult) { targetID=result.id; switch result.entityType { case .document: selection = .library; case .claim: selection = .claims; case .record: if let kind=RecordKind(rawValue:result.kind) { selection = AppSection.allCases.first { $0.kind == kind } } } }
  private func navigate(_ section: AppSection) { targetID = nil; selection = section }
 }
 private struct Sidebar: View { @Binding var selection: AppSection?
  var body: some View { VStack(alignment: .leading, spacing: 0) {
-  HStack(spacing: 11) {
-   ZStack { RoundedRectangle(cornerRadius: 7).fill(MITheme.accent); Image(systemName: "cube.transparent").font(.system(size: 16, weight: .medium)).foregroundStyle(.white) }.frame(width: 32, height: 32)
-   VStack(alignment: .leading, spacing: 2) { Text("MATERIALS").font(.system(size: 10, weight: .bold, design: .default)).tracking(1.1); Text("Intelligence").font(.system(size: 14, weight: .semibold)) }
-  }.padding(.horizontal, 16).padding(.top, 20).padding(.bottom, 17)
-  Divider().padding(.horizontal, 14)
+  HStack(spacing: MITheme.Space.regular) {
+   BrandMark(size: 32)
+   VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text("MATERIALS").font(MITheme.Typography.metadata.weight(.bold)).tracking(1.1); Text("Intelligence").font(MITheme.Typography.sectionTitle) }
+  }.padding(.horizontal, MITheme.Space.panel).padding(.top, MITheme.Space.page).padding(.bottom, MITheme.Space.panel)
+  Divider().padding(.horizontal, MITheme.Space.panel)
   ScrollView {
-   VStack(alignment: .leading, spacing: 2) {
+  VStack(alignment: .leading, spacing: MITheme.Space.tight) {
     sidebarSection("Workspace", items: [.overview, .ask, .search, .explorer, .research])
     sidebarSection("Engineering records", items: [.materials, .mechanisms, .components, .standards, .sources])
     sidebarSection("Evidence", items: [.library, .claims, .relationships])
     sidebarSection("Workflows", items: [.assessment, .agent, .personalVault])
-   }.padding(.horizontal, 10)
+   }.padding(.horizontal, MITheme.Space.regular)
   }
   Spacer()
-  Divider().padding(.horizontal, 14)
-  nav(.settings).padding(.horizontal, 10).padding(.top, 8)
-  HStack(spacing: 9) { Circle().fill(MITheme.accent.opacity(0.8)).frame(width: 7, height: 7); VStack(alignment: .leading, spacing: 2) { Text("Local workspace").font(.system(size: 11, weight: .semibold)); Text("Offline · SQLite + FTS5").font(.system(size: 10)).foregroundStyle(.secondary) } }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 17).padding(.top, 11).padding(.bottom, 15)
+  Divider().padding(.horizontal, MITheme.Space.panel)
+  nav(.settings).padding(.horizontal, MITheme.Space.regular).padding(.top, MITheme.Space.compact)
+  nav(.about).padding(.horizontal, MITheme.Space.regular).padding(.top, MITheme.Space.tight)
+  HStack(spacing: MITheme.Space.compact) { Circle().fill(MITheme.accent.opacity(0.8)).frame(width: 7, height: 7); VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text("Local workspace").font(MITheme.Typography.metadata.weight(.semibold)); Text("Offline · SQLite + FTS5").font(MITheme.Typography.metadata).foregroundStyle(.secondary) } }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, MITheme.Space.panel).padding(.top, MITheme.Space.regular).padding(.bottom, MITheme.Space.panel)
  }.frame(minWidth: 205, idealWidth: 224, maxWidth: 250).background(MITheme.sidebar) }
  private func nav(_ section: AppSection) -> some View { SidebarNavigationItem(section: section, selection: $selection) }
- private func sidebarSection(_ title: String, items: [AppSection]) -> some View { VStack(alignment: .leading, spacing: 2) { Text(title.uppercased()).font(.system(size: 9, weight: .bold)).tracking(1.0).foregroundStyle(.tertiary).padding(.leading, 12).padding(.top, 14).padding(.bottom, 4); ForEach(items) { nav($0) } } }
+ private func sidebarSection(_ title: String, items: [AppSection]) -> some View { VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(title.uppercased()).font(MITheme.Typography.metadata.weight(.bold)).tracking(1.0).foregroundStyle(.tertiary).padding(.leading, MITheme.Space.regular).padding(.top, MITheme.Space.panel).padding(.bottom, MITheme.Space.tight); ForEach(items) { nav($0) } } }
 }
+
+private struct BrandMark: View {
+ let size: CGFloat
+
+ var body: some View {
+  ZStack {
+   RoundedRectangle(cornerRadius: size * 0.22, style: .continuous).fill(MITheme.accent)
+   Canvas { context, canvasSize in
+    let points: [(CGFloat, CGFloat)] = [
+     (0.50, 0.17), (0.79, 0.335), (0.79, 0.665),
+     (0.50, 0.83), (0.21, 0.665), (0.21, 0.335)
+    ]
+    var outline = Path()
+    outline.move(to: CGPoint(x: points[0].0 * canvasSize.width, y: points[0].1 * canvasSize.height))
+    for point in points.dropFirst() {
+     outline.addLine(to: CGPoint(x: point.0 * canvasSize.width, y: point.1 * canvasSize.height))
+    }
+    outline.closeSubpath()
+
+    var facets = Path()
+    let center = CGPoint(x: canvasSize.width * 0.5, y: canvasSize.height * 0.5)
+    for point in points {
+     facets.move(to: center)
+     facets.addLine(to: CGPoint(x: point.0 * canvasSize.width, y: point.1 * canvasSize.height))
+    }
+    let lineWidth = max(canvasSize.width * 0.038, 1)
+    context.stroke(outline, with: .color(.white.opacity(0.94)), style: StrokeStyle(lineWidth: lineWidth, lineJoin: .round))
+    context.stroke(facets, with: .color(.white.opacity(0.76)), style: StrokeStyle(lineWidth: lineWidth * 0.78, lineCap: .round))
+    let nodeSize = canvasSize.width * 0.12
+    let node = CGRect(x: center.x - nodeSize / 2, y: center.y - nodeSize / 2, width: nodeSize, height: nodeSize)
+    context.fill(Path(ellipseIn: node), with: .color(Color(red: 0.70, green: 0.87, blue: 0.82)))
+   }
+  }
+  .frame(width: size, height: size)
+  .accessibilityHidden(true)
+ }
+}
+
 private struct SidebarNavigationItem: View {
  let section: AppSection
  @Binding var selection: AppSection?
@@ -41,43 +80,92 @@ private struct SidebarNavigationItem: View {
  private var isSelected: Bool { selection == section }
  var body: some View {
   Button { selection = section } label: {
-   HStack(spacing: 9) {
+   HStack(spacing: MITheme.Space.compact) {
     Capsule().fill(isSelected ? MITheme.accent : .clear).frame(width: 2, height: 15)
-    Label(section.title, systemImage: section.symbol).font(.system(size: 12, weight: isSelected ? .semibold : .regular)).frame(maxWidth: .infinity, alignment: .leading)
-   }.foregroundStyle(isSelected ? MITheme.accent : Color.primary.opacity(0.82)).padding(.vertical, 6).padding(.trailing, 8).background(isSelected ? MITheme.selected : (hovering ? Color.primary.opacity(0.045) : .clear), in: RoundedRectangle(cornerRadius: 6))
+    Label(section.title, systemImage: section.symbol).font(MITheme.Typography.navigation.weight(isSelected ? .semibold : .regular)).frame(maxWidth: .infinity, alignment: .leading)
+   }.foregroundStyle(isSelected ? MITheme.accent : Color.primary.opacity(0.82)).padding(.vertical, MITheme.Space.tight + 2).padding(.trailing, MITheme.Space.compact).background(isSelected ? MITheme.selected : (hovering ? Color.primary.opacity(0.045) : .clear), in: RoundedRectangle(cornerRadius: MITheme.Radius.selection, style: .continuous))
   }.buttonStyle(.plain).accessibilityLabel(section.title).accessibilityIdentifier("navigation.\(section.rawValue)").accessibilityAddTraits(isSelected ? .isSelected : []).onHover { hovering = $0 }
  }
 }
 private struct SidebarButtonStyle: ButtonStyle {
  let selected: Bool
  func makeBody(configuration: Configuration) -> some View {
-  configuration.label.font(.system(size: 12, weight: selected ? .semibold : .regular))
+  configuration.label.font(MITheme.Typography.navigation.weight(selected ? .semibold : .regular))
    .foregroundStyle(selected ? MITheme.accent : .primary)
-   .background(selected ? MITheme.selected : (configuration.isPressed ? Color.primary.opacity(0.07) : .clear), in: RoundedRectangle(cornerRadius: 6))
+   .background(selected ? MITheme.selected : (configuration.isPressed ? Color.primary.opacity(0.07) : .clear), in: RoundedRectangle(cornerRadius: MITheme.Radius.selection, style: .continuous))
    .opacity(configuration.isPressed ? 0.8 : 1)
  }
 }
-private extension AppSection { var symbol:String { switch self { case .agent:"sparkles"; case .personalVault:"icloud"; case .assessment:"wrench.and.screwdriver"; case .explorer:"point.3.connected.trianglepath.dotted"; case .overview:"house"; case .ask:"questionmark.bubble"; case .search:"magnifyingglass"; case .library:"books.vertical"; case .research:"doc.badge.plus"; case .materials:"cube"; case .mechanisms:"exclamationmark.shield"; case .standards:"text.book.closed"; case .components:"gearshape"; case .sources:"doc.text"; case .claims:"checkmark.seal"; case .relationships:"link"; case .settings:"gear" } } }
+private extension AppSection { var symbol:String { switch self { case .agent:"sparkles"; case .personalVault:"icloud"; case .assessment:"wrench.and.screwdriver"; case .explorer:"point.3.connected.trianglepath.dotted"; case .overview:"house"; case .ask:"questionmark.bubble"; case .search:"magnifyingglass"; case .library:"books.vertical"; case .research:"doc.badge.plus"; case .materials:"cube"; case .mechanisms:"exclamationmark.shield"; case .standards:"text.book.closed"; case .components:"gearshape"; case .sources:"doc.text"; case .claims:"checkmark.seal"; case .relationships:"link"; case .settings:"gear"; case .about:"info.circle" } } }
 
 private struct Page: View { let section: AppSection; let store: KnowledgeStore?; @Binding var refresh: UUID; @Binding var targetID:String?; let error: String?; let openResult:(SearchResult)->Void; let navigate:(AppSection)->Void
- var body: some View { Group { if let error { ContentUnavailableView("Database unavailable", systemImage:"externaldrive.badge.exclamationmark", description:Text(error)) } else if let store { if section == .agent { AgentPage(store: store) } else if section == .personalVault { PersonalVaultLauncher() } else if section == .assessment { AssessmentPage(store: store) } else if section == .explorer { GraphPage(store: store, openResult: openResult) } else if section == .overview { Overview(store: store, navigate: navigate) } else if section == .materials { MaterialsPage(store: store, refresh: $refresh, targetID: $targetID) } else if let kind=section.kind { RecordPage(kind:kind, store:store, refresh:$refresh, targetID:$targetID) } else if section == .search { SearchPage(store:store, openResult:openResult) } else if section == .library { LibraryPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .research { ResearchPage(store: store) } else if section == .claims { ClaimsPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .relationships { RelationshipsPage(store:store, refresh:$refresh) } else if section == .ask { AskPage(store: store, openResult: openResult) } else if section == .settings { SettingsPage() } else { Overview(store:store, navigate:navigate) } } else { ProgressView("Opening local knowledge") } }.toolbar { Button("Refresh", systemImage:"arrow.clockwise") { refresh=UUID() }.accessibilityIdentifier("toolbar.refresh") } }
+ var body: some View { Group { if section == .about { AboutPage() } else if let error { ContentUnavailableView("Database unavailable", systemImage:"externaldrive.badge.exclamationmark", description:Text(error)) } else if let store { if section == .agent { AgentPage(store: store) } else if section == .personalVault { PersonalVaultLauncher() } else if section == .assessment { AssessmentPage(store: store) } else if section == .explorer { GraphPage(store: store, openResult: openResult) } else if section == .overview { Overview(store: store, navigate: navigate) } else if section == .materials { MaterialsPage(store: store, refresh: $refresh, targetID: $targetID) } else if let kind=section.kind { RecordPage(kind:kind, store:store, refresh:$refresh, targetID:$targetID) } else if section == .search { SearchPage(store:store, openResult:openResult) } else if section == .library { LibraryPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .research { ResearchPage(store: store) } else if section == .claims { ClaimsPage(store:store, refresh:$refresh, targetID:$targetID) } else if section == .relationships { RelationshipsPage(store:store, refresh:$refresh) } else if section == .ask { AskPage(store: store, openResult: openResult) } else if section == .settings { SettingsPage() } else { Overview(store:store, navigate:navigate) } } else { ProgressView("Opening local knowledge") } }.toolbar { Button("Refresh", systemImage:"arrow.clockwise") { refresh=UUID() }.accessibilityIdentifier("toolbar.refresh") } }
 }
-private struct SettingsPage:View { var body:some View { VStack(alignment: .leading, spacing: 18) { PageHeader(title: "Settings", subtitle: "Local storage and application behavior"); Panel { VStack(alignment: .leading, spacing: 12) { LabeledContent("Storage",value:"Local Application Support database"); LabeledContent("Search",value:"Offline SQLite FTS5"); Divider(); Text("Documents remain at their original locations. Library keeps access bookmarks and metadata.").foregroundStyle(.secondary) } } }.padding(32).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(MITheme.canvas) } }
 
-enum MITheme {
- static let accent = Color(red: 0.13, green: 0.38, blue: 0.45)
- static let selected = accent.opacity(0.10)
- static let canvas = Color(nsColor: .underPageBackgroundColor)
- static let sidebar = Color(nsColor: .controlBackgroundColor).opacity(0.58)
- static let surface = Color(nsColor: .windowBackgroundColor)
- static let separator = Color.primary.opacity(0.085)
- static let panelRadius: CGFloat = 7
- static let pageInset: CGFloat = 26
- static let panelInset: CGFloat = 15
- static let sectionGap: CGFloat = 14
+private struct AboutPage: View {
+ private var version: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0" }
+
+ var body: some View {
+  ScrollView {
+   VStack(alignment: .leading, spacing: MITheme.Space.page) {
+    HStack(spacing: MITheme.Space.panel) {
+     BrandMark(size: 72)
+   VStack(alignment: .leading, spacing: MITheme.Space.compact) {
+      Text("Materials Intelligence").font(MITheme.Typography.pageTitle)
+      Text("Materials knowledge, made clear.").font(MITheme.Typography.supporting).foregroundStyle(.secondary)
+     }
+    }
+    Text("A native workspace for organizing materials records, reviewing claims against sources, and tracing relationships across engineering knowledge.")
+     .font(MITheme.Typography.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+    Panel {
+     VStack(spacing: MITheme.Space.regular) {
+      LabeledContent("Version", value: version)
+      Divider()
+      LabeledContent("Platform", value: "macOS 26 or later")
+      Divider()
+      LabeledContent("Knowledge store", value: "On this Mac · SQLite")
+      Divider()
+      LabeledContent("Privacy", value: "Local by default · sync is optional")
+     }
+    }
+    Panel {
+     Label {
+      Text("Early development release. Review technical evidence before applying it to engineering decisions.")
+       .font(MITheme.Typography.metadata).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+     } icon: {
+      Image(systemName: "checkmark.seal").foregroundStyle(MITheme.accent)
+     }
+    }
+    Text("© 2026 Siddharth Tank").font(MITheme.Typography.metadata).foregroundStyle(.tertiary)
+   }
+   .frame(maxWidth: 640, alignment: .leading)
+   .padding(MITheme.Space.inset)
+   .frame(maxWidth: .infinity, alignment: .topLeading)
+  }
+  .background(MITheme.canvas)
+  .accessibilityIdentifier("about.page")
+ }
 }
-struct Panel<Content: View>: View { @ViewBuilder let content: () -> Content; var body: some View { content().padding(MITheme.panelInset).frame(maxWidth: .infinity, alignment: .leading).background(MITheme.surface, in: RoundedRectangle(cornerRadius: MITheme.panelRadius, style: .continuous)).overlay(RoundedRectangle(cornerRadius: MITheme.panelRadius).stroke(MITheme.separator, lineWidth: 0.7)) } }
-struct PageHeader: View { let title: String; let subtitle: String; var body: some View { VStack(alignment: .leading, spacing: 4) { Text(title).font(.system(size: 26, weight: .semibold)); Text(subtitle).font(.system(size: 12.5)).foregroundStyle(.secondary) } } }
+private struct SettingsPage: View {
+ var body: some View {
+  VStack(alignment: .leading, spacing: MITheme.Space.page) {
+   PageHeader(title: "Settings", subtitle: "Local storage and application behavior")
+   Panel {
+    VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+     LabeledContent("Storage", value: "Local Application Support database")
+     LabeledContent("Search", value: "Offline SQLite FTS5")
+     Divider()
+     Text("Documents remain at their original locations. Library keeps access bookmarks and metadata.").foregroundStyle(.secondary)
+    }
+   }
+  }
+  .font(MITheme.Typography.body)
+  .padding(MITheme.Space.inset)
+  .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+  .background(MITheme.canvas)
+ }
+}
+
 private struct AskPage: View {
     let store: KnowledgeStore
     let openResult: (SearchResult) -> Void
@@ -89,27 +177,27 @@ private struct AskPage: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: MITheme.Space.page) {
                 PageHeader(title: "Ask", subtitle: "Evidence-grounded answers from your local materials knowledge base.")
-                HStack { Image(systemName: "desktopcomputer"); Text("LOCAL · database search and on-device model only").font(.caption.weight(.semibold)) }.foregroundStyle(.secondary)
-                if let unavailable = provider.availabilityMessage { Panel { Label(unavailable, systemImage: "cpu").foregroundStyle(.orange) } }
+                HStack { Image(systemName: "desktopcomputer"); Text("LOCAL · database search and on-device model only").font(MITheme.Typography.metadata.weight(.semibold)) }.foregroundStyle(.secondary)
+                if let unavailable = provider.availabilityMessage { Panel { Label(unavailable, systemImage: "cpu").foregroundStyle(MITheme.caution) } }
                 Panel {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: MITheme.Space.regular) {
                         TextField("Ask an engineering question…", text: $question, axis: .vertical).lineLimit(2...4)
                         HStack { Spacer(); Button("Ask locally") { submit() }.buttonStyle(.borderedProminent).disabled(question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || loading) }
                     }
                 }
                 if loading { ProgressView("Searching evidence and asking the local model…") }
-                if !error.isEmpty { Panel { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange) } }
+                if !error.isEmpty { Panel { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(MITheme.danger) } }
                 if let answer {
                     Panel {
-                        VStack(alignment: .leading, spacing: 14) {
-                            HStack { SectionTitle("Answer", icon: "text.bubble"); Spacer(); if answer.generatedLocally { StatusBadge(title: "LOCAL — no internet used", color: .green) } }
+                        VStack(alignment: .leading, spacing: MITheme.Space.panel) {
+                            HStack { SectionTitle("Answer", icon: "text.bubble"); Spacer(); if answer.generatedLocally { StatusBadge(title: "LOCAL — no internet used", color: MITheme.success) } }
                             if let message = answer.message { Text(message).foregroundStyle(.secondary) }
                             ForEach(answer.points) { point in
-                                VStack(alignment: .leading, spacing: 7) {
+                                VStack(alignment: .leading, spacing: MITheme.Space.compact) {
                                     Text(point.text)
-                                    Text("Generated explanation · check the claims below").font(.caption).foregroundStyle(.secondary)
+                                    Text("Generated explanation · check the claims below").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
                                     ForEach(point.evidence) { evidence in
                                         Button { open(.claim, evidence.claim.id, title: evidence.claim.statement) } label: {
                                             Label("Claim · \(evidence.claim.status.title) · \(evidence.subject.name)", systemImage: "checkmark.seal")
@@ -122,12 +210,12 @@ private struct AskPage: View {
                     }
                     if !answer.found.isEmpty {
                         Panel {
-                            VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .leading, spacing: MITheme.Space.regular) {
                                 SectionTitle("Supporting claims and sources", icon: "books.vertical")
                                 ForEach(answer.found) { item in
-                                    VStack(alignment: .leading, spacing: 5) {
+                                    VStack(alignment: .leading, spacing: MITheme.Space.tight) {
                                         Text(item.claim.statement)
-                                        Text("\(item.claim.status.title) · \(item.subject.name) · \(item.claim.locator.isEmpty ? "No locator" : item.claim.locator)").font(.caption).foregroundStyle(.secondary)
+                                        Text("\(item.claim.status.title) · \(item.subject.name) · \(item.claim.locator.isEmpty ? "No locator" : item.claim.locator)").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
                                         HStack {
                                             Button("Open claim") { open(.claim, item.claim.id, title: item.claim.statement) }
                                             Button("Open source: \(item.source.name)") { open(.record, item.source.id, title: item.source.name, kind: .source) }
@@ -139,8 +227,8 @@ private struct AskPage: View {
                         }
                     }
                 }
-                Text("Library document contents are not indexed. Illustrative or unreviewed claims do not authorize a generated engineering conclusion.").font(.caption).foregroundStyle(.secondary)
-            }.frame(maxWidth: 860, alignment: .leading).padding(32).frame(maxWidth: .infinity, alignment: .leading)
+                Text("Library document contents are not indexed. Illustrative or unreviewed claims do not authorize a generated engineering conclusion.").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
+            }.font(MITheme.Typography.body).frame(maxWidth: 860, alignment: .leading).padding(MITheme.Space.inset).frame(maxWidth: .infinity, alignment: .leading)
         }.background(MITheme.canvas)
     }
 
@@ -159,37 +247,35 @@ private struct AskPage: View {
 }
 
 private struct Overview: View { let store: KnowledgeStore; let navigate:(AppSection)->Void
- var body: some View { ScrollView { VStack(alignment: .leading, spacing: 18) {
+ var body: some View { ScrollView { VStack(alignment: .leading, spacing: MITheme.Space.page) {
   PageHeader(title: "Materials Intelligence", subtitle: "A local workspace for materials knowledge and source-traceable evidence.")
-  LazyVGrid(columns: [GridItem(.adaptive(minimum: 185), spacing: 10)], alignment: .leading, spacing: 10) {
+  LazyVGrid(columns: [GridItem(.adaptive(minimum: 185), spacing: MITheme.Space.regular)], alignment: .leading, spacing: MITheme.Space.regular) {
    metric("Knowledge records", value: totalRecords, note: "materials, mechanisms, standards and sources", icon: "square.stack.3d.up")
    metric("Engineering claims", value: claims, note: "stored with subject and source links", icon: "checkmark.seal")
    metric("Library documents", value: documents, note: "metadata and local file references", icon: "books.vertical")
   }
-  LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], alignment: .leading, spacing: 12) { coverage; activity }
-  LazyVGrid(columns: [GridItem(.flexible(minimum: 420), spacing: 12), GridItem(.flexible(minimum: 235), spacing: 12)], alignment: .leading, spacing: 12) {
-   Panel { VStack(alignment: .leading, spacing: 12) {
+  LazyVGrid(columns: [GridItem(.flexible(), spacing: MITheme.Space.regular), GridItem(.flexible(), spacing: MITheme.Space.regular)], alignment: .leading, spacing: MITheme.Space.regular) { coverage; activity }
+  LazyVGrid(columns: [GridItem(.flexible(minimum: 420), spacing: MITheme.Space.regular), GridItem(.flexible(minimum: 235), spacing: MITheme.Space.regular)], alignment: .leading, spacing: MITheme.Space.regular) {
+   Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) {
     SectionTitle("Open a workspace", icon: "arrow.up.right.square")
-    LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 8)], spacing: 8) {
+    LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: MITheme.Space.compact)], spacing: MITheme.Space.compact) {
      action("Ask", "questionmark.bubble", .ask); action("Search evidence", "magnifyingglass", .search); action("Explore relationships", "point.3.connected.trianglepath.dotted", .explorer); action("Review research", "doc.badge.plus", .research)
     }
    } }
-   Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Workspace status", icon: "externaldrive")
+   Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { SectionTitle("Workspace status", icon: "externaldrive")
     statusRow("Database", "On this Mac"); statusRow("Search", "SQLite FTS5"); statusRow("Files", "Remain at source location")
    } }
   }
  }.padding(MITheme.pageInset) }.background(MITheme.canvas) }
  private var totalRecords: String { "\((try? store.records().count) ?? 0)" }; private var claims: String { "\((try? store.claims().count) ?? 0)" }; private var documents: String { "\((try? store.documents().count) ?? 0)" }
- private func color(for kind: RecordKind) -> Color { switch kind { case .material: .blue; case .mechanism: .orange; case .standard: .purple; case .component: .green; case .source: .gray } }
+ private func color(for kind: RecordKind) -> Color { MITheme.categoryColor(for: kind) }
  private func section(for kind: RecordKind) -> AppSection { switch kind { case .material: .materials; case .mechanism: .mechanisms; case .standard: .standards; case .component: .components; case .source: .sources } }
- private var coverage: some View { Panel { VStack(alignment: .leading, spacing: 8) { SectionTitle("Records by type", icon: "chart.bar.xaxis"); ForEach(RecordKind.allCases, id: \.self) { k in Button { navigate(section(for: k)) } label: { HStack(spacing: 9) { Circle().fill(color(for: k)).frame(width: 7, height: 7); Text(k.rawValue.capitalized); Spacer(); Text("\((try? store.records(kind: k).count) ?? 0)").font(.system(.body, design: .monospaced)).foregroundStyle(.secondary); Image(systemName: "chevron.right").font(.caption2).foregroundStyle(.tertiary) }.contentShape(Rectangle()) }.buttonStyle(.plain).padding(.vertical, 3) } } } }
- private var activity: some View { Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Evidence coverage", icon: "point.3.connected.trianglepath.dotted"); Text("Each engineering claim retains its subject, source, review state, and recorded conditions.").font(.system(size: 12)).foregroundStyle(.secondary); Divider(); statusRow("Claims", claims); statusRow("Sources", "\((try? store.records(kind: .source).count) ?? 0)"); statusRow("Relationships", "\((try? store.relationships().count) ?? 0)") } } }
- private func action(_ title: String, _ icon: String, _ section: AppSection) -> some View { Button { navigate(section) } label: { Label(title, systemImage: icon).font(.system(size: 12, weight: .medium)).frame(maxWidth: .infinity, minHeight: 36, alignment: .leading).padding(.horizontal, 10).background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 5)).contentShape(Rectangle()) }.buttonStyle(.plain).accessibilityIdentifier("overview.action.\(section.rawValue)") }
+ private var coverage: some View { Panel { VStack(alignment: .leading, spacing: MITheme.Space.compact) { SectionTitle("Records by type", icon: "chart.bar.xaxis"); ForEach(RecordKind.allCases, id: \.self) { k in Button { navigate(section(for: k)) } label: { HStack(spacing: MITheme.Space.compact) { Circle().fill(color(for: k)).frame(width: 7, height: 7); Text(k.rawValue.capitalized); Spacer(); Text("\((try? store.records(kind: k).count) ?? 0)").font(.system(.body, design: .monospaced)).foregroundStyle(.secondary); Image(systemName: "chevron.right").font(MITheme.Typography.metadata).foregroundStyle(.tertiary) }.contentShape(Rectangle()) }.buttonStyle(.plain).padding(.vertical, MITheme.Space.tight) } } } }
+ private var activity: some View { Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { SectionTitle("Evidence coverage", icon: "point.3.connected.trianglepath.dotted"); Text("Each engineering claim retains its subject, source, review state, and recorded conditions.").font(MITheme.Typography.metadata).foregroundStyle(.secondary); Divider(); statusRow("Claims", claims); statusRow("Sources", "\((try? store.records(kind: .source).count) ?? 0)"); statusRow("Relationships", "\((try? store.relationships().count) ?? 0)") } } }
+ private func action(_ title: String, _ icon: String, _ section: AppSection) -> some View { Button { navigate(section) } label: { Label(title, systemImage: icon).font(MITheme.Typography.supporting.weight(.medium)).frame(maxWidth: .infinity, minHeight: 40, alignment: .leading).padding(.horizontal, MITheme.Space.regular).background(MITheme.subtleSurface, in: RoundedRectangle(cornerRadius: MITheme.Radius.control, style: .continuous)).contentShape(Rectangle()) }.buttonStyle(.plain).accessibilityIdentifier("overview.action.\(section.rawValue)") }
  private func statusRow(_ title: String, _ value: String) -> some View { HStack { Text(title).foregroundStyle(.secondary); Spacer(); Text(value) } }
- private func metric(_ title: String, value: String, note: String, icon: String) -> some View { Panel { HStack(alignment: .top, spacing: 12) { Image(systemName: icon).font(.system(size: 14, weight: .semibold)).foregroundStyle(MITheme.accent).frame(width: 24, alignment: .leading).padding(.top, 2); VStack(alignment: .leading, spacing: 4) { Text(title.uppercased()).font(.system(size: 9, weight: .bold)).tracking(0.7).foregroundStyle(.secondary); Text(value).font(.system(size: 26, weight: .semibold, design: .rounded).monospacedDigit()); Text(note).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(2) } } } }
+ private func metric(_ title: String, value: String, note: String, icon: String) -> some View { Panel { HStack(alignment: .top, spacing: MITheme.Space.regular) { Image(systemName: icon).font(MITheme.Typography.sectionTitle).foregroundStyle(MITheme.accent).frame(width: 24, alignment: .leading).padding(.top, MITheme.Space.tight); VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(title.uppercased()).font(MITheme.Typography.metadata.weight(.bold)).tracking(0.7).foregroundStyle(.secondary); Text(value).font(MITheme.Typography.metricValue.monospacedDigit()); Text(note).font(MITheme.Typography.metadata).foregroundStyle(.secondary).lineLimit(2) } } } }
 }
-private struct SectionTitle: View { let title: String; let icon: String; init(_ title: String, icon: String) { self.title = title; self.icon = icon }; var body: some View { Label(title, systemImage: icon).font(.system(size: 13, weight: .semibold)).foregroundStyle(MITheme.accent) } }
-
 private struct SearchPage: View {
     let store: KnowledgeStore; let openResult:(SearchResult)->Void
     @State private var query = ""
@@ -198,20 +284,20 @@ private struct SearchPage: View {
     @State private var status: VerificationStatus? = nil
     @State private var results:[SearchResult] = []
     @State private var error = ""
-    var body: some View { VStack(alignment:.leading, spacing:14) {
+    var body: some View { VStack(alignment:.leading, spacing: MITheme.Space.panel) {
         PageHeader(title: "Search", subtitle: "Find materials, claims, standards, and local documents.")
-        HStack(spacing: 10) { Image(systemName: "magnifyingglass").foregroundStyle(MITheme.accent); TextField("Search local knowledge…", text:$query).textFieldStyle(.plain).onSubmit(search).accessibilityIdentifier("search.query"); if !query.isEmpty { Button("Clear", systemImage: "xmark.circle.fill") { query = ""; results = [] }.buttonStyle(.plain).foregroundStyle(.secondary) }; Button("Search", action:search).buttonStyle(.borderedProminent).keyboardShortcut(.return, modifiers:[]).accessibilityIdentifier("search.submit") }.padding(9).background(MITheme.surface, in: RoundedRectangle(cornerRadius: 6)).overlay(RoundedRectangle(cornerRadius: 6).stroke(MITheme.separator, lineWidth: 0.7))
+        HStack(spacing: MITheme.Space.compact) { Image(systemName: "magnifyingglass").foregroundStyle(MITheme.accent); TextField("Search local knowledge…", text:$query).textFieldStyle(.plain).onSubmit(search).accessibilityIdentifier("search.query"); if !query.isEmpty { Button("Clear", systemImage: "xmark.circle.fill") { query = ""; results = [] }.buttonStyle(.plain).foregroundStyle(.secondary) }; Button("Search", action:search).buttonStyle(.borderedProminent).keyboardShortcut(.return, modifiers:[]).accessibilityIdentifier("search.submit") }.padding(MITheme.Space.regular).background(MITheme.surface, in: RoundedRectangle(cornerRadius: MITheme.Radius.control, style: .continuous)).overlay(RoundedRectangle(cornerRadius: MITheme.Radius.control, style: .continuous).stroke(MITheme.separator, lineWidth: 0.7))
         filters
-        if !error.isEmpty { Text(error).foregroundStyle(.red) }
-        if query.isEmpty { ContentUnavailableView("Search your local engineering knowledge", systemImage:"magnifyingglass", description:Text("Results rank full-text and prefix matches across records, claims, and Library metadata.")) } else { List(results) { result in Button { openResult(result) } label: { VStack(alignment:.leading,spacing:4) { HStack { Text(result.title).font(.headline); Spacer(); Text(result.entityType.title).font(.caption).padding(4).background(.quaternary, in:Capsule()) }; HighlightedText(text:result.detail, query:query).foregroundStyle(.secondary); Text(result.kind.replacingOccurrences(of:"_",with:" ")).font(.caption).foregroundStyle(.tertiary) }.padding(.vertical,3).frame(maxWidth:.infinity,alignment:.leading) }.buttonStyle(.plain).accessibilityLabel("Open \(result.entityType.title): \(result.title)") }.overlay { if results.isEmpty && error.isEmpty { ContentUnavailableView("No local matches", systemImage:"magnifyingglass") } } }
-    }.padding(MITheme.pageInset).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(MITheme.canvas).onChange(of: kind) { _,_ in search() }.onChange(of: status) { _,_ in search() }.onChange(of:selectedTypes) { _,_ in search() }.accessibilityIdentifier("workspace.search") }
-    private var filters: some View { HStack { Menu("Types") { ForEach(SearchEntityType.allCases) { type in Toggle(type.title, isOn: typeBinding(type)) } }; Picker("Record type",selection:$kind){ Text("All records").tag(RecordKind?.none); ForEach(RecordKind.allCases,id:\.self) { recordKind in Text(recordKind.rawValue.capitalized).tag(Optional(recordKind)) } }.frame(width:180); Picker("Claim state",selection:$status) { Text("All claim states").tag(VerificationStatus?.none); ForEach(VerificationStatus.allCases,id:\.self) { claimStatus in Text(claimStatus.title).tag(Optional(claimStatus)) } }.frame(width:190); Spacer(); Text("Offline FTS5").font(.caption).foregroundStyle(.secondary) } }
+        if !error.isEmpty { Text(error).foregroundStyle(MITheme.danger) }
+        if query.isEmpty { ContentUnavailableView("Search your local engineering knowledge", systemImage:"magnifyingglass", description:Text("Results rank full-text and prefix matches across records, claims, and Library metadata.")) } else { List(results) { result in Button { openResult(result) } label: { VStack(alignment:.leading,spacing:MITheme.Space.tight) { HStack { Text(result.title).font(MITheme.Typography.sectionTitle); Spacer(); Text(result.entityType.title).font(MITheme.Typography.metadata).padding(.horizontal, MITheme.Space.compact).padding(.vertical, MITheme.Space.tight).background(MITheme.selected, in:Capsule()) }; HighlightedText(text:result.detail, query:query).foregroundStyle(.secondary); Text(result.kind.replacingOccurrences(of:"_",with:" ")).font(MITheme.Typography.metadata).foregroundStyle(.tertiary) }.padding(.vertical, MITheme.Space.tight).frame(maxWidth:.infinity,alignment:.leading) }.buttonStyle(.plain).accessibilityLabel("Open \(result.entityType.title): \(result.title)") }.overlay { if results.isEmpty && error.isEmpty { ContentUnavailableView("No local matches", systemImage:"magnifyingglass") } } }
+    }.font(MITheme.Typography.body).padding(MITheme.pageInset).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(MITheme.canvas).onChange(of: kind) { _,_ in search() }.onChange(of: status) { _,_ in search() }.onChange(of:selectedTypes) { _,_ in search() }.accessibilityIdentifier("workspace.search") }
+    private var filters: some View { HStack { Menu("Types") { ForEach(SearchEntityType.allCases) { type in Toggle(type.title, isOn: typeBinding(type)) } }; Picker("Record type",selection:$kind){ Text("All records").tag(RecordKind?.none); ForEach(RecordKind.allCases,id:\.self) { recordKind in Text(recordKind.rawValue.capitalized).tag(Optional(recordKind)) } }.frame(width:180); Picker("Claim state",selection:$status) { Text("All claim states").tag(VerificationStatus?.none); ForEach(VerificationStatus.allCases,id:\.self) { claimStatus in Text(claimStatus.title).tag(Optional(claimStatus)) } }.frame(width:190); Spacer(); Text("Offline FTS5").font(MITheme.Typography.metadata).foregroundStyle(.secondary) } }
     private func typeBinding(_ type:SearchEntityType) -> Binding<Bool> { Binding(get:{selectedTypes.contains(type)},set:{ enabled in if enabled {selectedTypes.insert(type)} else {selectedTypes.remove(type)} }) }
     private func search() { do { results = try store.search(query, entityTypes:selectedTypes, recordKind:kind, verificationStatus:status); error="" } catch let caught { error=caught.localizedDescription; results=[] } }
 }
 
 private struct HighlightedText: View { let text:String; let query:String
-    var body: some View { let words=query.split(whereSeparator:\.isWhitespace).map(String.init).filter{!$0.isEmpty}; Text(words.reduce(AttributedString(text)) { output, word in var value=output; var cursor=value.startIndex; while let range=value[cursor...].range(of:word,options:.caseInsensitive) { value[range].backgroundColor = .yellow.opacity(0.35); cursor=range.upperBound }; return value }) }
+    var body: some View { let words=query.split(whereSeparator:\.isWhitespace).map(String.init).filter{!$0.isEmpty}; Text(words.reduce(AttributedString(text)) { output, word in var value=output; var cursor=value.startIndex; while let range=value[cursor...].range(of:word,options:.caseInsensitive) { value[range].backgroundColor = MITheme.accent.opacity(0.18); cursor=range.upperBound }; return value }) }
 }
 
 private struct LibraryPage: View {
@@ -225,7 +311,7 @@ private struct LibraryPage: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 10) { Text("Library").font(.title2.bold()); Text("Local documents and source files").font(.caption).foregroundStyle(.secondary); ScrollView { LazyVStack(alignment: .leading, spacing: 3) { ForEach(documents) { document in Button { selected = document } label: { VStack(alignment: .leading, spacing: 3) { Label(document.title, systemImage: "doc.text").lineLimit(1); Text([document.organization, document.revisionYear].filter { !$0.isEmpty }.joined(separator: " · ")).font(.caption).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading).padding(8).contentShape(Rectangle()) }.buttonStyle(SidebarButtonStyle(selected: selected?.id == document.id)) } } }.frame(maxWidth: .infinity, maxHeight: .infinity) }.padding(.top, 18).frame(minWidth: 250, idealWidth: 320)
+            VStack(alignment: .leading, spacing: MITheme.Space.regular) { Text("Library").font(MITheme.Typography.pageTitle); Text("Local documents and source files").font(MITheme.Typography.metadata).foregroundStyle(.secondary); ScrollView { LazyVStack(alignment: .leading, spacing: MITheme.Space.tight) { ForEach(documents) { document in Button { selected = document } label: { VStack(alignment: .leading, spacing: MITheme.Space.tight) { Label(document.title, systemImage: "doc.text").lineLimit(1); Text([document.organization, document.revisionYear].filter { !$0.isEmpty }.joined(separator: " · ")).font(MITheme.Typography.metadata).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading).padding(MITheme.Space.compact).contentShape(Rectangle()) }.buttonStyle(SidebarButtonStyle(selected: selected?.id == document.id)) } } }.frame(maxWidth: .infinity, maxHeight: .infinity) }.padding(.top, MITheme.Space.panel).frame(minWidth: 250, idealWidth: 320)
             Divider()
             if let selected {
                 DocumentDetail(document: selected, store: store, changed: load, message: $message)
@@ -264,16 +350,16 @@ private struct DocumentDetail: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: MITheme.Space.page) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) { Text(document.title).font(.system(size: 25, weight: .semibold)); Text("Library document").font(.system(size: 12)).foregroundStyle(.secondary) }
+                    VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(document.title).font(MITheme.Typography.pageTitle); Text("Library document").font(MITheme.Typography.metadata).foregroundStyle(.secondary) }
                     Spacer()
                     Button("Open document", action: open).buttonStyle(.borderedProminent)
                     Button("Locate file…", action: locate)
                     Button("Edit metadata") { editing = true }
                 }
-                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Document details", icon: "info.circle"); if !document.organization.isEmpty { LabeledContent("Organization", value: document.organization) }; if !document.revisionYear.isEmpty { LabeledContent("Revision / year", value: document.revisionYear) }; if !document.sourceType.isEmpty { LabeledContent("Source type", value: document.sourceType) }; LabeledContent("File", value: document.fileName.isEmpty ? "Not linked" : document.fileName); Text(document.notes.isEmpty ? "No notes recorded." : document.notes).foregroundStyle(.secondary) } }
-                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Associated knowledge", icon: "link"); ForEach((try? store.recordIDs(documentID: document.id)) ?? [], id: \.self) { id in Label((try? store.record(id: id))?.name ?? "Unavailable record", systemImage: "cube") } } }
+                Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { SectionTitle("Document details", icon: "info.circle"); if !document.organization.isEmpty { LabeledContent("Organization", value: document.organization) }; if !document.revisionYear.isEmpty { LabeledContent("Revision / year", value: document.revisionYear) }; if !document.sourceType.isEmpty { LabeledContent("Source type", value: document.sourceType) }; LabeledContent("File", value: document.fileName.isEmpty ? "Not linked" : document.fileName); Text(document.notes.isEmpty ? "No notes recorded." : document.notes).foregroundStyle(.secondary) } }
+                Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { SectionTitle("Associated knowledge", icon: "link"); ForEach((try? store.recordIDs(documentID: document.id)) ?? [], id: \.self) { id in Label((try? store.record(id: id))?.name ?? "Unavailable record", systemImage: "cube") } } }
                 Button("Remove from Library", role: .destructive) { confirmRemoval = true }
             }
             .frame(maxWidth: .infinity, alignment: .leading).padding(MITheme.pageInset)
@@ -386,9 +472,9 @@ private struct DocumentEditor: View {
                     ))
                 }
             }
-            Text(error).foregroundStyle(.red)
+            Text(error).foregroundStyle(MITheme.danger)
         }
-        .padding().frame(width: 560, height: 620)
+        .padding(MITheme.Space.panel).frame(width: 560, height: 620)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {
@@ -430,7 +516,7 @@ private struct MaterialsPage: View {
     private var records: [KnowledgeRecord] { (try? store.records(kind: .material)) ?? [] }
     var body: some View {
         HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 10) { Text("Materials").font(.title2.bold()); Text("Materials, alloys, and engineering grades").font(.caption).foregroundStyle(.secondary); ScrollView { LazyVStack(alignment: .leading, spacing: 3) { ForEach(records) { record in Button { selected = record } label: { VStack(alignment: .leading, spacing: 3) { Text(record.name); Text(record.secondary).font(.caption).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading).padding(9).contentShape(Rectangle()) }.buttonStyle(SidebarButtonStyle(selected: selected?.id == record.id)) } } }.frame(maxHeight: .infinity) }.padding(.top, 18).padding(.horizontal, 12).frame(minWidth: 240, idealWidth: 300)
+            VStack(alignment: .leading, spacing: MITheme.Space.regular) { Text("Materials").font(MITheme.Typography.pageTitle); Text("Materials, alloys, and engineering grades").font(MITheme.Typography.metadata).foregroundStyle(.secondary); ScrollView { LazyVStack(alignment: .leading, spacing: MITheme.Space.tight) { ForEach(records) { record in Button { selected = record } label: { VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(record.name); Text(record.secondary).font(MITheme.Typography.metadata).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading).padding(MITheme.Space.regular).contentShape(Rectangle()) }.buttonStyle(SidebarButtonStyle(selected: selected?.id == record.id)) } } }.frame(maxHeight: .infinity) }.padding(.top, MITheme.Space.panel).padding(.horizontal, MITheme.Space.regular).frame(minWidth: 240, idealWidth: 300)
             Divider()
             if let selected { MaterialDetail(record: selected, store: store, edit: { editor = selected }, delete: { confirmDeletion = true }) } else { ContentUnavailableView("Select a material", systemImage: "cube") }
         }
@@ -464,18 +550,18 @@ private struct MaterialDetail: View {
     let edit: () -> Void
     let delete: () -> Void
     var body: some View {
-        ScrollView { VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .bottom) { VStack(alignment: .leading, spacing: 6) { Text("Materials / \(record.secondary.isEmpty ? "Alloys" : record.secondary) / \(record.name)").font(.system(size: 11)).foregroundStyle(.secondary); Text(record.name).font(.system(size: 27, weight: .semibold)) }; Spacer(); Button("Edit", action: edit).buttonStyle(.borderedProminent); Button("Delete", role: .destructive, action: delete) }
+        ScrollView { VStack(alignment: .leading, spacing: MITheme.Space.page) {
+            HStack(alignment: .bottom) { VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text("Materials / \(record.secondary.isEmpty ? "Alloys" : record.secondary) / \(record.name)").font(MITheme.Typography.metadata).foregroundStyle(.secondary); Text(record.name).font(MITheme.Typography.pageTitle) }; Spacer(); Button("Edit", action: edit).buttonStyle(.borderedProminent); Button("Delete", role: .destructive, action: delete) }
             RelatedKnowledgeButton(store: store, recordID: record.id)
-            HStack(spacing: 8) { Text(record.secondary.isEmpty ? "Material" : record.secondary).padding(.horizontal, 10).padding(.vertical, 5).background(.blue.opacity(0.12), in: Capsule()); Text("Local record").foregroundStyle(.secondary) }
-            HStack(alignment: .top, spacing: 14) {
-                Panel { VStack(alignment: .leading, spacing: 12) { SectionTitle("Material profile", icon: "cube"); detailRow("Common name", record.name); detailRow("Designation", record.secondary.isEmpty ? "Not recorded" : record.secondary); detailRow("Class", "Material record"); detailRow("Notes", record.detail.isEmpty ? "No detail recorded." : record.detail); Divider(); Text("Source-preserved engineering knowledge").font(.headline); Text("Properties and context remain attached to local records and their evidence.").foregroundStyle(.secondary) } }.frame(maxWidth: .infinity)
+            HStack(spacing: MITheme.Space.compact) { Text(record.secondary.isEmpty ? "Material" : record.secondary).padding(.horizontal, MITheme.Space.regular).padding(.vertical, MITheme.Space.tight).background(MITheme.categoryColor(for: .material).opacity(0.12), in: Capsule()); Text("Local record").foregroundStyle(.secondary) }
+            HStack(alignment: .top, spacing: MITheme.Space.panel) {
+                Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { SectionTitle("Material profile", icon: "cube"); detailRow("Common name", record.name); detailRow("Designation", record.secondary.isEmpty ? "Not recorded" : record.secondary); detailRow("Class", "Material record"); detailRow("Notes", record.detail.isEmpty ? "No detail recorded." : record.detail); Divider(); Text("Source-preserved engineering knowledge").font(MITheme.Typography.sectionTitle); Text("Properties and context remain attached to local records and their evidence.").foregroundStyle(.secondary) } }.frame(maxWidth: .infinity)
                 claimsPanel.frame(maxWidth: .infinity)
             }
-            Panel { VStack(alignment: .leading, spacing: 12) { SectionTitle("Relationship map", icon: "arrow.triangle.branch"); ForEach((try? store.relationships(recordID: record.id)) ?? []) { relationship in let other = relationship.fromID == record.id ? relationship.toID : relationship.fromID; HStack { Image(systemName: "link").foregroundStyle(.blue); Text((try? store.record(id: other))?.name ?? "Unknown record"); Spacer(); Text(relationship.predicate.replacingOccurrences(of: "_", with: " ")).foregroundStyle(.secondary) } } } }
+            Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { SectionTitle("Relationship map", icon: "arrow.triangle.branch"); ForEach((try? store.relationships(recordID: record.id)) ?? []) { relationship in let other = relationship.fromID == record.id ? relationship.toID : relationship.fromID; HStack { Image(systemName: "link").foregroundStyle(MITheme.accent); Text((try? store.record(id: other))?.name ?? "Unknown record"); Spacer(); Text(relationship.predicate.replacingOccurrences(of: "_", with: " ")).foregroundStyle(.secondary) } } } }
         }.padding(MITheme.pageInset).frame(maxWidth: .infinity, alignment: .leading) }.background(MITheme.canvas)
     }
-    private var claimsPanel: some View { Panel { VStack(alignment: .leading, spacing: 12) { HStack { SectionTitle("Key claims & evidence", icon: "checkmark.seal"); Spacer(); Text("\((try? store.claims(subjectID: record.id).count) ?? 0) claims").font(.caption).foregroundStyle(.secondary) }; ForEach((try? store.claims(subjectID: record.id)) ?? []) { claim in VStack(alignment: .leading, spacing: 6) { Text(claim.statement); HStack { StatusBadge(title: claim.status.title, color: claim.status == .verified ? .green : .orange); Text((try? store.record(id: claim.sourceID))?.name ?? "Unknown source").font(.caption).foregroundStyle(.secondary) }; if !claim.locator.isEmpty { Text(claim.locator).font(.caption2).foregroundStyle(.tertiary) } }; if claim.id != ((try? store.claims(subjectID: record.id)) ?? []).last?.id { Divider() } } } } }
+    private var claimsPanel: some View { Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { HStack { SectionTitle("Key claims & evidence", icon: "checkmark.seal"); Spacer(); Text("\((try? store.claims(subjectID: record.id).count) ?? 0) claims").font(MITheme.Typography.metadata).foregroundStyle(.secondary) }; ForEach((try? store.claims(subjectID: record.id)) ?? []) { claim in VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(claim.statement); HStack { StatusBadge(title: claim.status.title, color: MITheme.statusColor(for: claim.status)); Text((try? store.record(id: claim.sourceID))?.name ?? "Unknown source").font(MITheme.Typography.metadata).foregroundStyle(.secondary) }; if !claim.locator.isEmpty { Text(claim.locator).font(MITheme.Typography.metadata).foregroundStyle(.tertiary) } }; if claim.id != ((try? store.claims(subjectID: record.id)) ?? []).last?.id { Divider() } } } } }
     private func detailRow(_ title: String, _ value: String) -> some View { HStack(alignment: .top) { Text(title).foregroundStyle(.secondary).frame(width: 110, alignment: .leading); Text(value); Spacer() } }
 }
 
@@ -493,7 +579,7 @@ private struct RecordPage: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            ScrollView { LazyVStack(alignment: .leading, spacing: 3) { ForEach(records) { record in Button { selected = record } label: { VStack(alignment: .leading, spacing: 3) { Text(record.name); Text(record.secondary).font(.caption).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading).padding(8).contentShape(Rectangle()) }.buttonStyle(SidebarButtonStyle(selected: selected?.id == record.id)) } } }.frame(minWidth: 220, idealWidth: 300)
+            ScrollView { LazyVStack(alignment: .leading, spacing: MITheme.Space.tight) { ForEach(records) { record in Button { selected = record } label: { VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(record.name); Text(record.secondary).font(MITheme.Typography.metadata).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading).padding(MITheme.Space.compact).contentShape(Rectangle()) }.buttonStyle(SidebarButtonStyle(selected: selected?.id == record.id)) } } }.frame(minWidth: 220, idealWidth: 300)
             Divider()
             if let selected {
                 RecordDetail(record: selected, store: store, edit: { editor = selected }, delete: { confirmDeletion = true })
@@ -531,22 +617,20 @@ private struct RecordDetail: View {
     let delete: () -> Void
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: MITheme.Space.page) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 5) { Text(record.name).font(.system(size: 27, weight: .semibold)); RelatedKnowledgeButton(store: store, recordID: record.id); Text(record.kind.rawValue.capitalized).font(.system(size: 12)).foregroundStyle(.secondary) }
+                    VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(record.name).font(MITheme.Typography.pageTitle); RelatedKnowledgeButton(store: store, recordID: record.id); Text(record.kind.rawValue.capitalized).font(MITheme.Typography.metadata).foregroundStyle(.secondary) }
                     Spacer()
                     Button("Edit", action: edit).buttonStyle(.borderedProminent)
                     Button("Delete", role: .destructive, action: delete)
                 }
-                HStack(spacing: 8) { if !record.secondary.isEmpty { Text(record.secondary).font(.subheadline).padding(.horizontal, 10).padding(.vertical, 5).background(.blue.opacity(0.12), in: Capsule()) }; Text("Local record").font(.subheadline).foregroundStyle(.secondary) }
-                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Profile", icon: "cube"); Text(record.detail.isEmpty ? "No detail recorded." : record.detail).foregroundStyle(.secondary) } }
-                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Claims & evidence", icon: "checkmark.seal"); ForEach((try? store.claims(subjectID: record.id)) ?? []) { claim in HStack(alignment: .top) { Image(systemName: "doc.text").foregroundStyle(.blue); VStack(alignment: .leading, spacing: 3) { Text(claim.statement); Text("\(claim.status.title) · \((try? store.record(id: claim.sourceID))?.name ?? "Unknown source")").font(.caption).foregroundStyle(.secondary) }; Spacer(); StatusBadge(title: claim.status.title, color: claim.status == .verified ? .green : .orange) } } } }
-                Panel { VStack(alignment: .leading, spacing: 10) { SectionTitle("Relationships", icon: "arrow.triangle.branch"); ForEach((try? store.relationships(recordID: record.id)) ?? []) { relationship in let id = relationship.fromID == record.id ? relationship.toID : relationship.fromID; Label { Text((try? store.record(id: id))?.name ?? "Unknown"); Text(relationship.predicate.replacingOccurrences(of: "_", with: " ")).font(.caption).foregroundStyle(.secondary) } icon: { Image(systemName: "link") } } } } }
+                HStack(spacing: MITheme.Space.compact) { if !record.secondary.isEmpty { Text(record.secondary).font(MITheme.Typography.supporting).padding(.horizontal, MITheme.Space.regular).padding(.vertical, MITheme.Space.tight).background(MITheme.categoryColor(for: record.kind).opacity(0.12), in: Capsule()) }; Text("Local record").font(MITheme.Typography.supporting).foregroundStyle(.secondary) }
+                Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { SectionTitle("Profile", icon: "cube"); Text(record.detail.isEmpty ? "No detail recorded." : record.detail).foregroundStyle(.secondary) } }
+                Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { SectionTitle("Claims & evidence", icon: "checkmark.seal"); ForEach((try? store.claims(subjectID: record.id)) ?? []) { claim in HStack(alignment: .top) { Image(systemName: "doc.text").foregroundStyle(MITheme.accent); VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(claim.statement); Text("\(claim.status.title) · \((try? store.record(id: claim.sourceID))?.name ?? "Unknown source")").font(MITheme.Typography.metadata).foregroundStyle(.secondary) }; Spacer(); StatusBadge(title: claim.status.title, color: MITheme.statusColor(for: claim.status)) } } } }
+                Panel { VStack(alignment: .leading, spacing: MITheme.Space.regular) { SectionTitle("Relationships", icon: "arrow.triangle.branch"); ForEach((try? store.relationships(recordID: record.id)) ?? []) { relationship in let id = relationship.fromID == record.id ? relationship.toID : relationship.fromID; Label { Text((try? store.record(id: id))?.name ?? "Unknown"); Text(relationship.predicate.replacingOccurrences(of: "_", with: " ")).font(MITheme.Typography.metadata).foregroundStyle(.secondary) } icon: { Image(systemName: "link") } } } } }
             }.frame(maxWidth: .infinity, alignment: .leading).padding(MITheme.pageInset)
         }
     }
-
-struct StatusBadge: View { let title: String; let color: Color; var body: some View { Text(title).font(.system(size: 10, weight: .semibold)).foregroundStyle(color).padding(.horizontal, 7).padding(.vertical, 3).background(color.opacity(0.10), in: RoundedRectangle(cornerRadius: 4)) } }
 
 private struct RecordEditor: View {
     @Environment(\.dismiss) private var dismiss
@@ -569,8 +653,8 @@ private struct RecordEditor: View {
             TextField("Name", text: $name)
             TextField("Designation / revision", text: $secondary)
             TextField("Detail", text: $detail, axis: .vertical)
-            Text(error).foregroundStyle(.red)
-        }.padding().frame(width: 460)
+            Text(error).foregroundStyle(MITheme.danger)
+        }.padding(MITheme.Space.panel).frame(width: 460)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) { Button("Save", action: save).disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) }
@@ -596,25 +680,29 @@ struct ClaimsPage: View {
     private var claims: [EngineeringClaim] { (try? store.claims()) ?? [] }
     var body: some View {
         HStack(spacing: 0) {
-            ScrollView { LazyVStack(alignment: .leading, spacing: 3) { ForEach(claims) { claim in Button { selected = claim } label: { VStack(alignment: .leading, spacing: 3) { Text(claim.statement).lineLimit(2); Text("\(claim.status.title) · \((try? store.record(id: claim.sourceID))?.name ?? "Unknown source")").font(.caption).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading).padding(8).contentShape(Rectangle()) }.buttonStyle(SidebarButtonStyle(selected: selected?.id == claim.id)) } } }.frame(minWidth: 260, idealWidth: 360)
+            ScrollView { LazyVStack(alignment: .leading, spacing: MITheme.Space.tight) { ForEach(claims) { claim in Button { selected = claim } label: { VStack(alignment: .leading, spacing: MITheme.Space.tight) { Text(claim.statement).lineLimit(2); Text("\(claim.status.title) · \((try? store.record(id: claim.sourceID))?.name ?? "Unknown source")").font(MITheme.Typography.metadata).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading).padding(MITheme.Space.compact).contentShape(Rectangle()) }.buttonStyle(SidebarButtonStyle(selected: selected?.id == claim.id)) } } }.frame(minWidth: 260, idealWidth: 360)
             Divider()
             if let selected {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: MITheme.Space.page) {
                         HStack {
-                            Text("Engineering Claim").font(.largeTitle.bold())
+                            Text("Engineering Claim").font(MITheme.Typography.pageTitle)
+                            StatusBadge(title: selected.status.title, color: MITheme.statusColor(for: selected.status))
                             Spacer()
                             Button("Edit / Review") { editing = selected }
                             Button("Delete", role: .destructive) { confirmDeletion = true }
                         }
-                        Text(selected.statement)
-                        LabeledContent("State", value: selected.status.title)
-                        LabeledContent("Subject", value: (try? store.record(id: selected.subjectID))?.name ?? "Unknown")
-                        LabeledContent("Source", value: (try? store.record(id: selected.sourceID))?.name ?? "Unknown")
-                        LabeledContent("Page / section", value: selected.locator)
-                        Text(selected.notes)
-                        RelatedKnowledgeButton(store: store, recordID: selected.subjectID, claimID: selected.id)
-                    }.frame(maxWidth: .infinity, alignment: .leading).padding(MITheme.pageInset)
+                        Panel {
+                            VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+                                Text(selected.statement).font(MITheme.Typography.sectionTitle)
+                                LabeledContent("Subject", value: (try? store.record(id: selected.subjectID))?.name ?? "Unknown")
+                                LabeledContent("Source", value: (try? store.record(id: selected.sourceID))?.name ?? "Unknown")
+                                LabeledContent("Page / section", value: selected.locator)
+                                Text(selected.notes).foregroundStyle(.secondary)
+                                RelatedKnowledgeButton(store: store, recordID: selected.subjectID, claimID: selected.id)
+                            }
+                        }
+                    }.font(MITheme.Typography.body).frame(maxWidth: .infinity, alignment: .leading).padding(MITheme.pageInset)
                 }
             } else { ContentUnavailableView("Select a claim", systemImage: "checkmark.seal") }
         }
@@ -687,8 +775,8 @@ private struct ClaimEditor: View {
             Picker("Review state", selection: $status) {
                 ForEach(VerificationStatus.allCases, id: \.self) { Text($0.title).tag($0) }
             }
-            Text(error).foregroundStyle(.red)
-        }.padding().frame(width: 560, height: 620)
+            Text(error).foregroundStyle(MITheme.danger)
+        }.padding(MITheme.Space.panel).frame(width: 560, height: 620)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {
@@ -714,30 +802,39 @@ struct RelationshipsPage: View {
     private var relationships: [KnowledgeRelationship] { (try? store.relationships()) ?? [] }
     var body: some View {
         ScrollView {
-            if relationships.isEmpty {
-                ContentUnavailableView(
-                    "No relationships yet",
-                    systemImage: "point.3.connected.trianglepath.dotted",
-                    description: Text("Connect local records to make their context and supporting evidence easier to explore.")
-                )
-            } else {
-                LazyVStack(alignment: .leading, spacing: 3) {
-                    ForEach(relationships) { relationship in
-                        let from = (try? store.record(id: relationship.fromID))?.name ?? "?"
-                        let to = (try? store.record(id: relationship.toID))?.name ?? "?"
-                        Button {
-                            selected = relationship
-                        } label: {
-                            Text("\(from) — \(relationship.predicate.replacingOccurrences(of: "_", with: " ")) — \(to)")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(10)
-                                .contentShape(Rectangle())
+            VStack(alignment: .leading, spacing: MITheme.Space.page) {
+                PageHeader(title: "Relationships", subtitle: "Explicit links between stored records, with supporting evidence kept traceable.")
+                if relationships.isEmpty {
+                    ContentUnavailableView(
+                        "No relationships yet",
+                        systemImage: "point.3.connected.trianglepath.dotted",
+                        description: Text("Connect local records to make their context and supporting evidence easier to explore.")
+                    )
+                } else {
+                    LazyVStack(alignment: .leading, spacing: MITheme.Space.compact) {
+                        ForEach(relationships) { relationship in
+                            let from = (try? store.record(id: relationship.fromID))?.name ?? "?"
+                            let to = (try? store.record(id: relationship.toID))?.name ?? "?"
+                            Panel {
+                                Button {
+                                    selected = relationship
+                                } label: {
+                                    HStack(spacing: MITheme.Space.compact) {
+                                        Image(systemName: "arrow.left.arrow.right").foregroundStyle(MITheme.accent)
+                                        Text("\(from) — \(relationship.predicate.replacingOccurrences(of: "_", with: " ")) — \(to)")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        if selected?.id == relationship.id { Image(systemName: "checkmark").foregroundStyle(MITheme.accent) }
+                                    }
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .buttonStyle(SidebarButtonStyle(selected: selected?.id == relationship.id))
                     }
                 }
-                .padding(12)
             }
+            .font(MITheme.Typography.body)
+            .padding(MITheme.pageInset)
         }
         .accessibilityIdentifier("relationships.content")
         .navigationTitle("Relationships")
@@ -754,6 +851,7 @@ struct RelationshipsPage: View {
             }
         }
         .alert("Relationship", isPresented: Binding(get: { !message.isEmpty }, set: { if !$0 { message = "" } })) { Button("OK") {} } message: { Text(message) }
+        .background(MITheme.canvas)
     }
 }
 
@@ -781,8 +879,8 @@ private struct RelationshipEditor: View {
                 Text("None").tag("")
                 ForEach((try? store.claims()) ?? []) { Text($0.statement).tag($0.id) }
             }
-            Text(error).foregroundStyle(.red)
-        }.padding().frame(width: 480)
+            Text(error).foregroundStyle(MITheme.danger)
+        }.padding(MITheme.Space.panel).frame(width: 480)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {

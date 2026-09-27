@@ -125,7 +125,7 @@ private struct PersonalVaultReferenceTab: View {
                             ForEach(RecordKind.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
                         }
                         TextField("Name", text: $name).accessibilityIdentifier("personalVault.reference.name")
-                        if !message.isEmpty { Text(message).foregroundStyle(.red) }
+                        if !message.isEmpty { Text(message).foregroundStyle(MITheme.danger) }
                     }
                     HStack {
                         Button("Cancel") { adding = false; message = "" }.accessibilityIdentifier("personalVault.reference.cancel")
@@ -134,7 +134,7 @@ private struct PersonalVaultReferenceTab: View {
                             .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             .accessibilityIdentifier("personalVault.reference.save")
                     }
-                }.padding().navigationTitle("Add reference")
+                }.padding(MITheme.Space.panel).navigationTitle("Add reference")
             }.frame(minWidth: 340, minHeight: 270)
         }
     }
@@ -143,7 +143,7 @@ private struct PersonalVaultReferenceTab: View {
         List {
             Section("PERSONAL / PUBLIC VAULT") {
                 Text("This separate vault is for explicitly permitted knowledge. Keep restricted work in the Mac local vault.")
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                    .font(MITheme.Typography.metadata).foregroundStyle(.secondary)
             }
             if query.isEmpty {
                 if records.isEmpty {
@@ -153,10 +153,10 @@ private struct PersonalVaultReferenceTab: View {
                     Button {
                         select(SearchResult(id: record.id, entityType: .record, title: record.name, detail: record.detail, kind: record.kind.rawValue, score: 0))
                     } label: {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(record.name).font(.system(size: 12, weight: .medium))
+                        VStack(alignment: .leading, spacing: MITheme.Space.tight) {
+                            Text(record.name).font(MITheme.Typography.body.weight(.medium))
                             Text(record.kind.rawValue.capitalized + (record.secondary.isEmpty ? "" : " · \(record.secondary)"))
-                                .font(.system(size: 10)).foregroundStyle(.secondary)
+                                .font(MITheme.Typography.metadata).foregroundStyle(.secondary)
                         }
                     }.buttonStyle(.plain)
                 }
@@ -168,9 +168,9 @@ private struct PersonalVaultReferenceTab: View {
                     Button {
                         select(result)
                     } label: {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(result.title).font(.system(size: 12, weight: .medium))
-                            Text("\(result.entityType.title) · \(result.kind)").font(.system(size: 10)).foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: MITheme.Space.tight) {
+                            Text(result.title).font(MITheme.Typography.body.weight(.medium))
+                            Text("\(result.entityType.title) · \(result.kind)").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
                         }
                     }.buttonStyle(.plain)
                 }
@@ -184,15 +184,15 @@ private struct PersonalVaultReferenceTab: View {
     private var referenceSidebar: some View {
 #if os(macOS)
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
+            HStack(spacing: MITheme.Space.compact) {
                 Button("Add reference", systemImage: "plus") { adding = true }
                     .accessibilityIdentifier("personalVault.reference.add")
                 Button("Refresh", systemImage: "arrow.clockwise", action: reload)
                     .accessibilityIdentifier("personalVault.reference.refresh")
             }
             .buttonStyle(.borderless)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, MITheme.Space.regular)
+            .padding(.vertical, MITheme.Space.compact)
             Divider()
             referenceList
         }
@@ -251,14 +251,14 @@ private struct PersonalVaultAskTab: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    VaultPageHeader(title: "Ask", subtitle: "Search this vault and use on-device generation only when available.")
-                    VaultPanel {
-                        VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: MITheme.Space.panel) {
+                    PageHeader(title: "Ask", subtitle: "Search this vault and use on-device generation only when available.")
+                    Panel {
+                        VStack(alignment: .leading, spacing: MITheme.Space.regular) {
                             Label("LOCAL · on-device only", systemImage: "desktopcomputer")
-                                .font(.system(size: 10, weight: .semibold)).foregroundStyle(VaultTheme.accent)
+                                .font(MITheme.Typography.supporting.weight(.semibold)).foregroundStyle(MITheme.accent)
                             if let unavailable = provider.availabilityMessage {
-                                Label(unavailable, systemImage: "cpu").font(.system(size: 11)).foregroundStyle(.orange)
+                                Label(unavailable, systemImage: "cpu").font(MITheme.Typography.metadata).foregroundStyle(MITheme.caution)
                             }
                             TextField("Ask about stored evidence", text: $question, axis: .vertical)
                                 .lineLimit(2...4).accessibilityIdentifier("personalVault.ask.question")
@@ -272,23 +272,23 @@ private struct PersonalVaultAskTab: View {
                     }
                     if loading { ProgressView("Retrieving stored evidence…") }
                     if !message.isEmpty {
-                        VaultPanel { Label(message, systemImage: "exclamationmark.triangle").font(.system(size: 11)).foregroundStyle(.orange) }
+                        Panel { Label(message, systemImage: "exclamationmark.triangle").font(MITheme.Typography.metadata).foregroundStyle(MITheme.danger) }
                     }
                     if let answer {
                         if let text = answer.message {
-                            VaultPanel { Text(text).font(.system(size: 12)).foregroundStyle(.secondary) }
+                            Panel { Text(text).font(MITheme.Typography.metadata).foregroundStyle(.secondary) }
                         }
                         if !answer.points.isEmpty {
-                            VaultPanel {
-                                VStack(alignment: .leading, spacing: 11) {
-                                    VaultSectionTitle(title: "Generated explanation · unverified", icon: "text.bubble")
+                            Panel {
+                                VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+                                    SectionTitle(title: "Generated explanation · unverified", icon: "text.bubble")
                                     ForEach(answer.points) { point in
-                                        VStack(alignment: .leading, spacing: 7) {
-                                            Text(point.text).font(.system(size: 12))
+                                        VStack(alignment: .leading, spacing: MITheme.Space.compact) {
+                                            Text(point.text).font(MITheme.Typography.body)
                                             ForEach(point.evidence) { item in
                                                 NavigationLink("Claim · \(item.claim.status.title) · \(item.subject.name)") {
                                                     PortableClaimView(store: store, claim: item.claim)
-                                                }.font(.system(size: 11))
+                                                }.font(MITheme.Typography.metadata)
                                             }
                                         }
                                     }
@@ -296,23 +296,23 @@ private struct PersonalVaultAskTab: View {
                             }
                         }
                         if !answer.found.isEmpty {
-                            VaultPanel {
-                                VStack(alignment: .leading, spacing: 10) {
-                                    VaultSectionTitle(title: "Retrieved evidence", icon: "checkmark.seal")
+                            Panel {
+                                VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+                                    SectionTitle(title: "Retrieved evidence", icon: "checkmark.seal")
                                     ForEach(answer.found) { item in
                                         NavigationLink("\(item.claim.statement) · \(item.claim.status.title)") {
                                             PortableClaimView(store: store, claim: item.claim)
-                                        }.font(.system(size: 11))
+                                        }.font(MITheme.Typography.metadata)
                                     }
                                 }
                             }
                         }
                     }
                     Text("Generated explanations remain separate from reviewed knowledge. Check each cited claim against its source.")
-                        .font(.system(size: 10)).foregroundStyle(.secondary)
-                }.padding(22).frame(maxWidth: 860, alignment: .leading).frame(maxWidth: .infinity, alignment: .leading)
+                        .font(MITheme.Typography.metadata).foregroundStyle(.secondary)
+                }.padding(MITheme.Space.inset).frame(maxWidth: 860, alignment: .leading).frame(maxWidth: .infinity, alignment: .leading)
             }
-            .background(VaultTheme.canvas)
+            .background(MITheme.canvas)
             .navigationTitle("Ask")
             .accessibilityIdentifier("personalVault.ask.content")
             .onDisappear { request?.cancel(); request = nil; loading = false }
@@ -350,21 +350,21 @@ private struct PersonalVaultSyncTab: View {
     @State private var message = ""
 
     private var statusColor: Color {
-        if sync.pending || sync.status.hasPrefix("Sync paused:") || sync.status.hasPrefix("Conflict retained:") { return .orange }
-        if sync.status == "Up to date" || sync.status == "Synchronized personal/public vault" { return .green }
+        if sync.pending || sync.status.hasPrefix("Sync paused:") || sync.status.hasPrefix("Conflict retained:") { return MITheme.caution }
+        if sync.status == "Up to date" || sync.status == "Synchronized personal/public vault" { return MITheme.success }
         return .secondary
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 13) {
-                    VaultPageHeader(title: "Private Sync", subtitle: "An explicit, review-first connection for the separate personal/public vault.")
-                    VaultPanel {
-                        VStack(alignment: .leading, spacing: 11) {
-                            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: MITheme.Space.panel) {
+                    PageHeader(title: "Private Sync", subtitle: "An explicit, review-first connection for the separate personal/public vault.")
+                    Panel {
+                        VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+                            HStack(spacing: MITheme.Space.compact) {
                                 Circle().fill(statusColor).frame(width: 7, height: 7)
-                                Text(sync.status).font(.system(size: 12, weight: .semibold)).accessibilityIdentifier("personalVault.sync.status")
+                                Text(sync.status).font(MITheme.Typography.supporting.weight(.semibold)).accessibilityIdentifier("personalVault.sync.status")
                             }
                             Divider()
                             LabeledContent("Local vault", value: "\((try? store.records().count) ?? 0) records · \((try? store.claims().count) ?? 0) claims")
@@ -372,7 +372,7 @@ private struct PersonalVaultSyncTab: View {
                             LabeledContent("Cloud state", value: sync.pending ? "Incoming snapshot needs review" : "Checked only when you sync")
                             Toggle("I permit this vault to use my private iCloud", isOn: $consent)
                                 .accessibilityIdentifier("personalVault.sync.consent")
-                            HStack(spacing: 10) {
+                            HStack(spacing: MITheme.Space.regular) {
                                 Button("Sync now", systemImage: "arrow.triangle.2.circlepath") {
                                     Task { await sync.synchronize(consent: consent) }
                                 }
@@ -381,14 +381,14 @@ private struct PersonalVaultSyncTab: View {
                                 if sync.busy { ProgressView().controlSize(.small) }
                             }
                             Text("Sync never starts from navigation. Incoming changes require review; file contents and bookmarks stay on this device.")
-                                .font(.system(size: 10)).foregroundStyle(.secondary)
+                                .font(MITheme.Typography.metadata).foregroundStyle(.secondary)
                         }
                     }
                     if sync.pending {
-                        VaultPanel {
-                            VStack(alignment: .leading, spacing: 11) {
-                                VaultSectionTitle(title: "Review incoming snapshot", icon: "arrow.down.doc")
-                                Text(sync.review).font(.system(size: 10, design: .monospaced)).textSelection(.enabled)
+                        Panel {
+                            VStack(alignment: .leading, spacing: MITheme.Space.regular) {
+                                SectionTitle(title: "Review incoming snapshot", icon: "arrow.down.doc")
+                                Text(sync.review).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
                                 HStack {
                                     Button("Apply remote to this vault", role: .destructive) { confirmRemote = true }
                                         .disabled(!consent || sync.busy).accessibilityIdentifier("personalVault.sync.applyRemote")
@@ -398,21 +398,21 @@ private struct PersonalVaultSyncTab: View {
                             }
                         }
                     }
-                    VaultPanel {
-                        VStack(alignment: .leading, spacing: 9) {
-                            VaultSectionTitle(title: "Recovery", icon: "clock.arrow.circlepath")
+                    Panel {
+                        VStack(alignment: .leading, spacing: MITheme.Space.compact) {
+                            SectionTitle(title: "Recovery", icon: "clock.arrow.circlepath")
                             Text("A pre-resolution snapshot is retained locally when a reviewed replacement is applied.")
-                                .font(.system(size: 11)).foregroundStyle(.secondary)
+                                .font(MITheme.Typography.metadata).foregroundStyle(.secondary)
                             Button("Restore saved recovery snapshot", systemImage: "arrow.uturn.backward") { confirmRecovery = true }
                                 .disabled(sync.busy).accessibilityIdentifier("personalVault.sync.restoreRecovery")
                         }
                     }
                     if !message.isEmpty {
-                        VaultPanel { Label(message, systemImage: "exclamationmark.triangle").font(.system(size: 11)).foregroundStyle(.orange) }
+                        Panel { Label(message, systemImage: "exclamationmark.triangle").font(MITheme.Typography.metadata).foregroundStyle(MITheme.danger) }
                     }
-                }.padding(22).frame(maxWidth: 900, alignment: .leading).frame(maxWidth: .infinity, alignment: .leading)
+                }.padding(MITheme.Space.inset).frame(maxWidth: 900, alignment: .leading).frame(maxWidth: .infinity, alignment: .leading)
             }
-            .background(VaultTheme.canvas)
+            .background(MITheme.canvas)
             .navigationTitle("Sync")
             .accessibilityIdentifier("personalVault.sync.content")
             .confirmationDialog("Replace this local vault with the reviewed cloud snapshot? The current state will be saved for recovery.", isPresented: $confirmRemote) {
@@ -435,37 +435,6 @@ private struct PersonalVaultSyncTab: View {
     }
 }
 
-private enum VaultTheme {
-    static let accent = Color(red: 0.13, green: 0.38, blue: 0.45)
-    static let canvas = Color.primary.opacity(0.025)
-}
-
-private struct VaultPanel<Content: View>: View {
-    @ViewBuilder let content: () -> Content
-    var body: some View {
-        content().padding(14).frame(maxWidth: .infinity, alignment: .leading)
-            .background(.background, in: RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.primary.opacity(0.085), lineWidth: 0.7))
-    }
-}
-
-private struct VaultPageHeader: View {
-    let title: String
-    let subtitle: String
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 25, weight: .semibold))
-            Text(subtitle).font(.system(size: 12)).foregroundStyle(.secondary)
-        }
-    }
-}
-
-private struct VaultSectionTitle: View {
-    let title: String
-    let icon: String
-    var body: some View { Label(title, systemImage: icon).font(.system(size: 13, weight: .semibold)).foregroundStyle(VaultTheme.accent) }
-}
-
 struct PortableSearchDetail: View {
     let store: KnowledgeStore
     let result: SearchResult
@@ -476,11 +445,11 @@ struct PortableSearchDetail: View {
             PortableClaimView(store: store, claim: claim)
         } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(result.title).font(.system(size: 22, weight: .semibold))
+                VStack(alignment: .leading, spacing: MITheme.Space.compact) {
+                    Text(result.title).font(MITheme.Typography.pageTitle)
                     Text(result.detail).foregroundStyle(.secondary)
-                    Text("Document metadata only; the file remains on its originating device.").font(.system(size: 11)).foregroundStyle(.secondary)
-                }.padding(22)
+                    Text("Document metadata only; the file remains on its originating device.").font(MITheme.Typography.metadata).foregroundStyle(.secondary)
+                }.padding(MITheme.Space.inset)
             }
         }
     }
@@ -529,7 +498,7 @@ struct PortableClaimView: View {
             Text(claim.locator)
             Text(claim.notes)
             if let source = try? store.record(id: claim.sourceID) { NavigationLink("Source: \(source.name)") { PortableRecordView(store: store, record: source) } }
-            Text("Review evidence here; claim approval remains a Mac authoring action.").font(.caption)
+            Text("Review evidence here; claim approval remains a Mac authoring action.").font(MITheme.Typography.metadata)
         }.navigationTitle("Evidence")
     }
 }
