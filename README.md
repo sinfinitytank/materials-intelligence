@@ -44,15 +44,27 @@ It is designed for engineers and researchers who need a focused place to keep ma
 
 The repository includes illustrative sample content so the workspace can be explored immediately. Treat sample information as demonstration content, not as engineering guidance or a substitute for qualified review.
 
+For the checks that still require a local Mac, eligible Apple model, iPhone/iPad, or iCloud account, follow the beginner-friendly [manual verification guide](MANUAL_VERIFICATION_GUIDE.md).
+
+For everyday use and a synthetic walkthrough, see the [user guide](USER_GUIDE.md).
+
 ## Current verification
 
-The implementation through Phase 6 has passed the repository’s deterministic tests, a clean Release arm64 build, and a process launch check. Research packages remain staged until explicit review and an atomic commit; new claims enter as Unverified. Ask uses local SQLite/FTS5 retrieval and only supplies Reviewed or Verified claims to the on-device model. There is no cloud fallback, network service, embeddings index, or third-party runtime. Actual Apple model generation and full visual/interactive GUI review remain dependent on the local Mac’s model availability and manual verification.
+Implementations exist through Phase 10. Eight deterministic suites pass, along with macOS Debug/Release builds and unsigned generic iOS Simulator/device Release builds. A live macOS accessibility harness checks window resizing, global navigation, Private Vault tab lifecycle, local sync-configuration error handling, and close/reopen. Research packages remain staged until explicit review and an atomic commit; new claims enter as Unverified. Ask uses local SQLite/FTS5 retrieval and only supplies Reviewed or Verified claims to the on-device model. There is no cloud fallback, network service, embeddings index, or third-party runtime. This Mac reports Apple Foundation Models `modelNotReady`; real generation, CloudKit transfer, iOS runtime behavior, screenshot-based appearance review and additional manual workflows remain unverified. The roadmap is not complete; see [current state](CURRENT_STATE.md) and [remaining manual acceptance](MANUAL_ACCEPTANCE_REMAINING.md).
 
 To run the deterministic test suite from the repository root:
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./Scripts/test.sh
 ```
+
+To run the live macOS accessibility acceptance harness, first build the `MaterialsIntelligence` Debug app in Xcode, then pass its `.app` bundle to:
+
+```sh
+./Scripts/ui-acceptance.sh /path/to/MaterialsIntelligence.app
+```
+
+This requires a logged-in macOS desktop session and Accessibility permission for the terminal/test process. The harness launches an isolated app copy and temporary database, then cleans both up.
 
 For normal development, open `MaterialsIntelligence.xcodeproj` in Xcode and run the `MaterialsIntelligence` scheme on a Mac running macOS 26 or later.
 
@@ -86,4 +98,4 @@ Created and maintained by [Siddharth Tank](https://github.com/sinfinitytank).
 
 ## Remaining roadmap implementation
 
-Native graph exploration, degradation screening, a controlled local engineering agent and a universal iPhone/iPad reference target are implemented. Personal/public sync uses a separate opt-in vault. See [current state](CURRENT_STATE.md), [engineering tools](ENGINEERING_TOOLS.md), [mobile and sync setup](MOBILE_SYNC.md), and [agent scope](ENGINEERING_AGENT.md). Real iCloud, mobile runtime and model/GUI acceptance remain unverified; builds and deterministic tests are not substitutes for those checks.
+Native graph exploration, degradation screening, a controlled local engineering agent and a universal iPhone/iPad reference target are implemented. Personal/public sync uses a separate opt-in vault. See [current state](CURRENT_STATE.md), [engineering tools](ENGINEERING_TOOLS.md), [mobile and sync setup](MOBILE_SYNC.md), [agent scope](ENGINEERING_AGENT.md), and [final acceptance report](FINAL_ACCEPTANCE_REPORT.md). Real iCloud, mobile runtime, model generation and manual visual/workflow acceptance remain unverified; builds and deterministic tests are not substitutes for those checks.

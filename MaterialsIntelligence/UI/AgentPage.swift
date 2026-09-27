@@ -41,7 +41,7 @@ struct AgentPage: View {
                 } }
             }
             Panel { VStack(alignment: .leading, spacing: 8) { Text("Local task history").font(.headline); ForEach(history) { item in Button("\(item.createdAt) · \(item.state) · \(item.task)") { run = item } } } }
-        }.padding(28) }.background(MITheme.canvas).task { do { records = try store.records(); history = try store.agentRuns() } catch { self.error = error.localizedDescription } }
+        }.padding(MITheme.pageInset) }.background(MITheme.canvas).task { do { records = try store.records(); history = try store.agentRuns() } catch { self.error = error.localizedDescription } }
     }
     private func submit() {
         guard temperature.isEmpty || Double(temperature) != nil, pressure.isEmpty || Double(pressure) != nil else { error = "Enter numeric conditions or leave unknown fields blank."; return }

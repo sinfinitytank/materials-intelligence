@@ -25,8 +25,30 @@ struct EngineeringClaim: Identifiable, Equatable, Hashable, Codable, Sendable {
     var status: VerificationStatus
     var evidenceLevel: String
     var notes: String
-    init(id: String = UUID().uuidString, subjectID: String, predicate: String, statement: String, conditions: String = "", sourceID: String, locator: String = "", status: VerificationStatus = .unverified, evidenceLevel: String = "", notes: String = "") {
-        self.id = id; self.subjectID = subjectID; self.predicate = predicate; self.statement = statement; self.conditions = conditions; self.sourceID = sourceID; self.locator = locator; self.status = status; self.evidenceLevel = evidenceLevel; self.notes = notes
+    var createdAt: String
+    var modifiedAt: String
+    init(id: String = UUID().uuidString, subjectID: String, predicate: String, statement: String, conditions: String = "", sourceID: String, locator: String = "", status: VerificationStatus = .unverified, evidenceLevel: String = "", notes: String = "", createdAt: String = "", modifiedAt: String = "") {
+        self.id = id; self.subjectID = subjectID; self.predicate = predicate; self.statement = statement; self.conditions = conditions; self.sourceID = sourceID; self.locator = locator; self.status = status; self.evidenceLevel = evidenceLevel; self.notes = notes; self.createdAt = createdAt; self.modifiedAt = modifiedAt
+    }
+    private enum CodingKeys: String, CodingKey {
+        case id, subjectID, predicate, statement, conditions, sourceID, locator, status, evidenceLevel, notes, createdAt, modifiedAt
+    }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(String.self, forKey: .id)
+        subjectID = try values.decode(String.self, forKey: .subjectID)
+        predicate = try values.decode(String.self, forKey: .predicate)
+        statement = try values.decode(String.self, forKey: .statement)
+        conditions = try values.decode(String.self, forKey: .conditions)
+        sourceID = try values.decode(String.self, forKey: .sourceID)
+        locator = try values.decode(String.self, forKey: .locator)
+        status = try values.decode(VerificationStatus.self, forKey: .status)
+        evidenceLevel = try values.decode(String.self, forKey: .evidenceLevel)
+        notes = try values.decode(String.self, forKey: .notes)
+        // Wire format v1 snapshots created before timestamp preservation omitted
+        // these fields. Empty values intentionally ask SQLite to assign local time.
+        createdAt = try values.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        modifiedAt = try values.decodeIfPresent(String.self, forKey: .modifiedAt) ?? ""
     }
 }
 struct KnowledgeRelationship: Identifiable, Equatable, Hashable, Codable, Sendable {

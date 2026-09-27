@@ -42,8 +42,9 @@ private struct IngestionProvider: LocalAIProvider {
         let sourceEntity = package.entities[1]
         let source = KnowledgeRecord(kind: .source, name: sourceEntity.name, detail: sourceEntity.permanentDetail)
         try store.save(source)
-        let existing = EngineeringClaim(subjectID: material.id, predicate: "susceptibility", statement: "Synthetic opposing hydrogen statement.", conditions: "Synthetic condition A", sourceID: source.id, locator: "fixture section 1", status: .verified)
+        var existing = EngineeringClaim(subjectID: material.id, predicate: "susceptibility", statement: "Synthetic opposing hydrogen statement.", conditions: "Synthetic condition A", sourceID: source.id, locator: "fixture section 1", status: .verified)
         try store.save(existing)
+        existing = try store.claim(id: existing.id)!
         try fails("invalid import is not staged") { _ = try store.importResearch(Data("{".utf8)) }
         try check(try store.researchSessions().isEmpty && store.records().count == 2 && store.claims().count == 1, "invalid import cannot change staging or knowledge")
         var session = try store.importResearch(data)

@@ -91,3 +91,7 @@ Share source membership rather than replace the working Mac architecture. Use on
 ## 2026-09-27 — Controlled degradation agent and local audit
 
 Use a fixed bounded orchestrator rather than arbitrary autonomous model tool calls. Reuse deterministic Phase 8 rules, Phase 7 context and Phase 5 citation validation; explicitly expose missing inputs and research handoff. Keep task snapshots in schema 6 of the same SQLite store, excluded from sync to protect potentially restricted task context. No architecture replacement or model-generated engineering rules.
+
+## 2026-09-27 — Flat macOS Personal Vault reference pane
+
+Keep the app's main `NavigationSplitView`, but render the macOS Personal Vault Reference tab as a native list/detail HStack. Live accessibility navigation reproduced the workspace sidebar disappearing after the nested Reference split view was visited and then exited at compact width. Flattening only this Mac presentation removes the competing split-view lifecycle while preserving the iOS adaptive `NavigationSplitView`, shared store, tab model and native controls.

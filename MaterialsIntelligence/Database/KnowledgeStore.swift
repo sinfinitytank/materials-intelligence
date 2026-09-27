@@ -10,7 +10,12 @@ final class KnowledgeStore {
     private var db: OpaquePointer?
     private var deferSearchIndex = false
     static func applicationURL() throws -> URL {
-        let folder = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appending(path: "MaterialsIntelligence")
+        let folder: URL
+        if let isolatedDirectory = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix("--mi-test-application-support=") }) {
+            folder = URL(fileURLWithPath: String(isolatedDirectory.dropFirst("--mi-test-application-support=".count)), isDirectory: true)
+        } else {
+            folder = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appending(path: "MaterialsIntelligence")
+        }
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         return folder.appending(path: "knowledge.sqlite")
     }
@@ -179,7 +184,7 @@ final class KnowledgeStore {
             try execute("DELETE FROM records")
             try execute("DELETE FROM research_sessions")
             for r in snapshot.records { try save(r) }
-            for c in snapshot.claims { try save(c) }
+            for c in snapshot.claims { try save(c, preservingTimestamps: true) }
             for r in snapshot.relationships { try save(r) }
             for var d in snapshot.documents { d.bookmark = bookmarks[d.id] ?? ""; try save(d, recordIDs: snapshot.documentLinks[d.id] ?? []); try execute("UPDATE documents SET added_at=? WHERE id=?", [d.addedAt,d.id]) }
             for session in snapshot.research { try writeResearch(session) }
@@ -203,16 +208,20 @@ final class KnowledgeStore {
     }
     func record(id: String) throws -> KnowledgeRecord? { try records().first { $0.id == id } }
     func deleteRecord(id: String) throws { try transaction { try execute("DELETE FROM records WHERE id=?", [id]); try rebuildSearchIndex() } }
-    func save(_ claim: EngineeringClaim) throws {
+    func save(_ claim: EngineeringClaim, preservingTimestamps: Bool = false) throws {
         try transaction {
-            try execute("INSERT INTO claims(id,subject_id,predicate,statement,conditions,source_id,locator,status,evidence_level,notes) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET subject_id=excluded.subject_id,predicate=excluded.predicate,statement=excluded.statement,conditions=excluded.conditions,source_id=excluded.source_id,locator=excluded.locator,status=excluded.status,evidence_level=excluded.evidence_level,notes=excluded.notes", [claim.id,claim.subjectID,claim.predicate,claim.statement,claim.conditions,claim.sourceID,claim.locator,claim.status.rawValue,claim.evidenceLevel,claim.notes])
+            if preservingTimestamps {
+                try execute("INSERT INTO claims(id,subject_id,predicate,statement,conditions,source_id,locator,status,evidence_level,notes,created_at,modified_at) VALUES(?,?,?,?,?,?,?,?,?,?,COALESCE(NULLIF(?,''),CURRENT_TIMESTAMP),COALESCE(NULLIF(?,''),CURRENT_TIMESTAMP)) ON CONFLICT(id) DO UPDATE SET subject_id=excluded.subject_id,predicate=excluded.predicate,statement=excluded.statement,conditions=excluded.conditions,source_id=excluded.source_id,locator=excluded.locator,status=excluded.status,evidence_level=excluded.evidence_level,notes=excluded.notes,created_at=excluded.created_at,modified_at=excluded.modified_at", [claim.id,claim.subjectID,claim.predicate,claim.statement,claim.conditions,claim.sourceID,claim.locator,claim.status.rawValue,claim.evidenceLevel,claim.notes,claim.createdAt,claim.modifiedAt])
+            } else {
+                try execute("INSERT INTO claims(id,subject_id,predicate,statement,conditions,source_id,locator,status,evidence_level,notes) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET subject_id=excluded.subject_id,predicate=excluded.predicate,statement=excluded.statement,conditions=excluded.conditions,source_id=excluded.source_id,locator=excluded.locator,status=excluded.status,evidence_level=excluded.evidence_level,notes=excluded.notes", [claim.id,claim.subjectID,claim.predicate,claim.statement,claim.conditions,claim.sourceID,claim.locator,claim.status.rawValue,claim.evidenceLevel,claim.notes])
+            }
             try rebuildSearchIndex()
         }
     }
     func claims(subjectID: String? = nil) throws -> [EngineeringClaim] {
         var rows: [EngineeringClaim] = []
-        try query("SELECT id,subject_id,predicate,statement,conditions,source_id,locator,status,evidence_level,notes FROM claims WHERE (? IS NULL OR subject_id=?) ORDER BY modified_at DESC", [subjectID,subjectID]) { s in
-            rows.append(EngineeringClaim(id: text(s,0), subjectID: text(s,1), predicate: text(s,2), statement: text(s,3), conditions: text(s,4), sourceID: text(s,5), locator: text(s,6), status: VerificationStatus(rawValue: text(s,7)) ?? .unverified, evidenceLevel: text(s,8), notes: text(s,9)))
+        try query("SELECT id,subject_id,predicate,statement,conditions,source_id,locator,status,evidence_level,notes,created_at,modified_at FROM claims WHERE (? IS NULL OR subject_id=?) ORDER BY modified_at DESC", [subjectID,subjectID]) { s in
+            rows.append(EngineeringClaim(id: text(s,0), subjectID: text(s,1), predicate: text(s,2), statement: text(s,3), conditions: text(s,4), sourceID: text(s,5), locator: text(s,6), status: VerificationStatus(rawValue: text(s,7)) ?? .unverified, evidenceLevel: text(s,8), notes: text(s,9), createdAt: text(s,10), modifiedAt: text(s,11)))
         }
         return rows
     }

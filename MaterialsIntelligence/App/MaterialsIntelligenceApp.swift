@@ -6,5 +6,7 @@ struct MaterialsIntelligenceApp: App {
         WindowGroup {
             RootView()
         }
+        .defaultSize(width: 1360, height: 860)
+        .windowResizability(.contentMinSize)
     }
 }

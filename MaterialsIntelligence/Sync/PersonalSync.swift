@@ -7,13 +7,17 @@ import Combine
     @Published var review = ""
     @Published var pending = false
     @Published var busy = false
+    @Published private(set) var lastSuccessfulSync = "Not yet synchronized"
     let store: KnowledgeStore
     private var remoteRecord: CKRecord?
     private var remoteSnapshot: VaultSnapshot?
     private var capturedLocal: Data?
     private var database: CKDatabase?
     private let recordID = CKRecord.ID(recordName: "personal-vault-v1")
-    init(store: KnowledgeStore) { self.store = store }
+    init(store: KnowledgeStore) {
+        self.store = store
+        lastSuccessfulSync = (try? store.syncMetadata("lastSuccessfulSync")) ?? "Not yet synchronized"
+    }
     static func openStore() throws -> KnowledgeStore {
         let url = try KnowledgeStore.applicationURL().deletingLastPathComponent().appending(path: "personal-public.sqlite")
         return try KnowledgeStore(url: url)
@@ -43,7 +47,7 @@ import Combine
             let base = try store.syncMetadata("base").flatMap { Data(base64Encoded: $0) }
             switch VaultReconciliation.decision(local: localData, remote: remote, base: base) {
             case .unchanged:
-                try store.setSyncMetadata("base", localData.base64EncodedString()); status = "Up to date"
+                try store.setSyncMetadata("base", localData.base64EncodedString()); try markSuccessfulSync(); status = "Up to date"
             case .upload: try await upload(localData)
             case .download, .conflict:
                 pending = true
@@ -88,6 +92,12 @@ import Combine
         guard let saved = results.saveResults[recordID] else { throw KnowledgeStoreError(message: "Cloud did not acknowledge snapshot") }
         _ = try saved.get()
         try store.setSyncMetadata("base", data.base64EncodedString())
+        try markSuccessfulSync()
         pending = false; review = ""; status = "Synchronized personal/public vault"
+    }
+    private func markSuccessfulSync() throws {
+        let value = ISO8601DateFormatter().string(from: Date())
+        try store.setSyncMetadata("lastSuccessfulSync", value)
+        lastSuccessfulSync = value
     }
 }

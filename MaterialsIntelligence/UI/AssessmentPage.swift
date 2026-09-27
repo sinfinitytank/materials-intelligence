@@ -38,7 +38,7 @@ struct AssessmentPage: View {
                 if loading { ProgressView() }
                 if !points.isEmpty { Panel { VStack(alignment: .leading, spacing: 8) { Text("AI explanation — unverified inference").font(.headline); ForEach(points) { point in Text(point.text); ForEach(point.evidence) { item in Text("[\(item.id)] \(item.source.name) · \(item.claim.locator)").font(.caption) } } } } }
             }
-        }.padding(28) }.background(MITheme.canvas).task { do { records = try store.records() } catch { self.error = error.localizedDescription } }
+        }.padding(MITheme.pageInset) }.background(MITheme.canvas).task { do { records = try store.records() } catch { self.error = error.localizedDescription } }
     }
     private func assess() {
         do {

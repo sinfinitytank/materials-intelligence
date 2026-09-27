@@ -1,4 +1,6 @@
-# Final read-only-style roadmap audit — 2026-09-27
+# Historical final read-only-style roadmap audit — 2026-09-27
+
+This is the original audit snapshot. Its claim-timestamp finding has since been corrected and covered by sync tests. Current stabilization status is recorded in [FINAL_ROADMAP_AUDIT_2026-09-27.md](FINAL_ROADMAP_AUDIT_2026-09-27.md); the real CloudKit/device and manual GUI gates remain open.
 
 Audited after Phase 10 checkpoint 66fd798. No implementation fixes were made during this audit. This report records findings; it does not redefine roadmap requirements.
 

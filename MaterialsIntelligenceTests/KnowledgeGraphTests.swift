@@ -13,6 +13,7 @@ import Foundation
         for r in [a,b,c,d,source] { try store.save(r) }
         let claim = EngineeringClaim(id: "e", subjectID: a.id, predicate: "property", statement: "Synthetic finding", sourceID: source.id, locator: "p1", status: .reviewed)
         try store.save(claim)
+        let storedClaim = try store.claim(id: claim.id)!
         for edge in [KnowledgeRelationship(id: "1", fromID: "a", predicate: "susceptible", toID: "b", supportingClaimID: "e"), KnowledgeRelationship(id: "2", fromID: "b", predicate: "context", toID: "c"), KnowledgeRelationship(id: "3", fromID: "c", predicate: "cycle", toID: "a"), KnowledgeRelationship(id: "4", fromID: "c", predicate: "applies", toID: "d")] { try store.save(edge) }
         let graph = try KnowledgeGraph(store: store)
         check(Set(graph.traverse(from: "a", depth: 1).paths.map(\.id)) == ["b","c","s"], "first hop includes derived source")
@@ -25,9 +26,9 @@ import Foundation
         check(graph.edges.first { $0.id == "relationship:1" }?.claimID == claim.id, "stored provenance")
         check(graph.edges.first { $0.id == "claim:e" }?.to == source.id, "derived provenance")
         let comparison = graph.compare(["a", "b", "a"])
-        check(comparison.count == 2 && comparison[0].claims == [claim] && comparison[0].sources == [source], "comparison retains exact evidence")
+        check(comparison.count == 2 && comparison[0].claims == [storedClaim] && comparison[0].sources == [source], "comparison retains exact evidence and timestamps")
         check(comparison[0].standards == [c], "comparison standard")
-        var archived = claim; archived.status = .archived; try store.save(archived)
+        var archived = storedClaim; archived.status = .archived; try store.save(archived)
         let archivedGraph = try KnowledgeGraph(store: store)
         check(!archivedGraph.edges.contains { $0.id == "claim:e" }, "archived derivation excluded")
         check(archivedGraph.claims[claim.id]?.status == .archived, "stored edge still exposes archived provenance")

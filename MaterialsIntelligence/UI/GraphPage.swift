@@ -68,7 +68,7 @@ struct GraphPage: View {
                         } }
                     }
                 }
-            }.padding(28)
+            }.padding(MITheme.pageInset)
         }.background(MITheme.canvas).task { reload() }
     }
     @ViewBuilder private func recordButton(_ record: KnowledgeRecord) -> some View {
