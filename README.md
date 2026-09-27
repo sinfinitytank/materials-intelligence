@@ -83,3 +83,7 @@ Materials Intelligence is released under the [MIT License](LICENSE). See the lic
 ## Author
 
 Created and maintained by [Siddharth Tank](https://github.com/sinfinitytank).
+
+## Remaining roadmap implementation
+
+Native graph exploration, degradation screening, a controlled local engineering agent and a universal iPhone/iPad reference target are implemented. Personal/public sync uses a separate opt-in vault. See [current state](CURRENT_STATE.md), [engineering tools](ENGINEERING_TOOLS.md), [mobile and sync setup](MOBILE_SYNC.md), and [agent scope](ENGINEERING_AGENT.md). Real iCloud, mobile runtime and model/GUI acceptance remain unverified; builds and deterministic tests are not substitutes for those checks.

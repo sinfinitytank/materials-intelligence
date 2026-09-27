@@ -84,7 +84,7 @@ import Combine
         let record = remoteRecord ?? CKRecord(recordType: "PersonalVault", recordID: recordID)
         record["payload"] = CKAsset(fileURL: file)
         record["version"] = 1 as CKRecordValue
-        let results = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .ifServerRecordUnchanged, atomically: true)
+        let results = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .ifServerRecordUnchanged, atomically: false)
         guard let saved = results.saveResults[recordID] else { throw KnowledgeStoreError(message: "Cloud did not acknowledge snapshot") }
         _ = try saved.get()
         try store.setSyncMetadata("base", data.base64EncodedString())

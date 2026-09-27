@@ -46,6 +46,11 @@ import SQLite3
         try check(try VaultSnapshot(store: b).encoded() == old, "late failure rolls back all tables and FTS")
         let reopened = try KnowledgeStore(url: dir.appending(path: "b.sqlite"))
         try check(try reopened.records().count == 2002, "offline reopen")
+        try reopened.setSyncMetadata("migration-check", "preserve")
+        sqlite3_open(dir.appending(path: "b.sqlite").path, &db)
+        sqlite3_exec(db, "DROP TABLE agent_runs; PRAGMA user_version=5", nil, nil, nil); sqlite3_close(db)
+        let migrated = try KnowledgeStore(url: dir.appending(path: "b.sqlite"))
+        try check(try migrated.schemaVersion() == 6 && migrated.syncMetadata("migration-check") == "preserve" && migrated.records().count == 2002, "schema 5 to 6 preserves sync and knowledge")
         print("Vault sync tests passed: conflicts, archive/delete, provenance, atomic rollback, 2002 records, offline reopen")
     }
 }

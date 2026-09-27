@@ -1,12 +1,12 @@
 # Architecture
 
-Materials Intelligence is a native SwiftUI macOS 26+ application with one Xcode app target and no third-party runtime. `App` opens the local database, `UI` reads and writes through `KnowledgeStore`, `Domain` holds value models, `Database` owns SQLite statements and migration, and `AI` owns local question answering. No mobile target is implemented.
+Materials Intelligence is a native SwiftUI macOS 26+ application with a Mac target and universal iPhone/iPad target and no third-party runtime. `App` opens the local database, `UI` reads and writes through `KnowledgeStore`, `Domain` holds value models, `Database` owns SQLite statements and migration, and `AI` owns local question answering. The mobile target shares non-AppKit source membership.
 
 ## Domain and storage
 
 `KnowledgeRecord` has an immutable string ID, kind (`material`, `mechanism`, `standard`, `component`, `source`), canonical name, detail, and secondary designation. The common `records` table gives claims, relationships, and document associations stable foreign-key targets. Names are unique within kind, case insensitively. `EngineeringClaim` is separate from UI narrative or future AI output; it stores subject/source foreign keys, predicate, statement, conditions, locator, verification state, evidence level, notes, and timestamps. States are Draft, Unverified, Reviewed, Verified, Superseded, and Archived. A trigger requires sources to have `source` kind. `KnowledgeRelationship` links records with an optional supporting-claim foreign key. SQLite RESTRICT foreign keys prevent referenced records and claims from being silently removed.
 
-The database resides in `Application Support/MaterialsIntelligence/knowledge.sqlite`; every connection enables foreign keys. `PRAGMA user_version` selects numbered migrations. Version 1 contains records, claims, and relationships; version 2 expands claim states; version 3 adds documents, associations, and FTS5; version 4 adds persisted research-session snapshots. Fresh databases create the current version. Version 1 upgrades transactionally by copying claims and dependent relationships into replacement tables, dropping the old relationships before old claims, renaming replacement tables, recreating indexes/triggers, and checking foreign-key integrity before commit. Direct version 3 to version 4 migration is regression-tested with existing knowledge retained. A newer schema fails safely.
+The database resides in `Application Support/MaterialsIntelligence/knowledge.sqlite`; every connection enables foreign keys. `PRAGMA user_version` selects numbered migrations. Versions 5 and 6 add sync metadata and local agent audit. Version 1 contains records, claims, and relationships; version 2 expands claim states; version 3 adds documents, associations, and FTS5; version 4 adds persisted research-session snapshots. Fresh databases create the current version. Version 1 upgrades transactionally by copying claims and dependent relationships into replacement tables, dropping the old relationships before old claims, renaming replacement tables, recreating indexes/triggers, and checking foreign-key integrity before commit. Direct version 3 to version 4 migration is regression-tested with existing knowledge retained. A newer schema fails safely.
 
 ## UI and lifecycle
 
@@ -49,3 +49,7 @@ Approved dependencies must also be explicitly accepted or reused. An outer savep
 ## Phase 9 shared targets and opt-in vault
 
 The universal iPhone/iPad target shares existing non-AppKit source files; no duplicate domain model. PersonalVaultView is shared adaptive reference UI. Schema 5 adds SQLite sync metadata. PersonalSync only operates on the separate personal/public store; VaultSnapshot validates a versioned payload and applies it atomically through the same repository, deferring FTS until transaction end. Private CloudKit uses optimistic concurrency, explicit incoming review and local recovery. See `MOBILE_SYNC.md`. The original Mac vault stays independent and local.
+
+## Phase 10 controlled orchestration
+
+EngineeringAgent uses a fixed explicit tool sequence over existing record/FTS/graph/assessment services. Natural-language intent and exact stored names identify the bounded workflow; structured fields control conditions. Optional local explanation remains separate. Schema 6 stores task/audit snapshots; these never enter FTS or personal sync. Research mode only creates a handoff brief, retaining Phase 6 as the sole researched-knowledge ingestion gate. See ENGINEERING_AGENT.md.

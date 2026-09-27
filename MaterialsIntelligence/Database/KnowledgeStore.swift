@@ -73,7 +73,7 @@ final class KnowledgeStore {
     }
     private func migrate() throws {
         let version = try schemaVersion()
-        guard version <= 5 else { throw KnowledgeStoreError(message: "Database schema is newer than this app") }
+        guard version <= 6 else { throw KnowledgeStoreError(message: "Database schema is newer than this app") }
         if version == 0 {
             try execute("BEGIN IMMEDIATE")
             do {
@@ -140,6 +140,22 @@ final class KnowledgeStore {
                 try execute("PRAGMA user_version = 5")
             }
         }
+        if version <= 5 {
+            try transaction {
+                try execute("CREATE TABLE IF NOT EXISTS agent_runs (id TEXT PRIMARY KEY, snapshot TEXT NOT NULL)")
+                try execute("PRAGMA user_version = 6")
+            }
+        }
+    }
+    func saveAgentRun(_ run: AgentRun) throws {
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let snapshot = String(decoding: try encoder.encode(run), as: UTF8.self)
+        try execute("INSERT INTO agent_runs(id,snapshot) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET snapshot=excluded.snapshot", [run.id,snapshot])
+    }
+    func agentRuns() throws -> [AgentRun] {
+        var rows: [String] = []
+        try query("SELECT snapshot FROM agent_runs ORDER BY rowid DESC LIMIT 100") { rows.append(text($0,0)) }
+        return try rows.map { try JSONDecoder().decode(AgentRun.self, from: Data($0.utf8)) }
     }
     func syncMetadata(_ key: String) throws -> String? {
         var value: String?

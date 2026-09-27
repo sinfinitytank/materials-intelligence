@@ -1,44 +1,27 @@
-# Current State
+# Current State — 2026-09-27
 
-## Scope
+## Implemented scope
 
-Phases 0 through 9 are implemented in native SwiftUI macOS 26+ and universal iOS/iPadOS 26+ targets. The app uses system SQLite/FTS5, AppKit file panels, security-scoped bookmarks, and Apple Foundation Models when available. It has no web runtime, third-party dependency, cloud fallback, network research service, embeddings store, autonomous ingestion, autonomous research, or Phase 10 functionality.
+Phases 0–10 now have native implementations: macOS 26+ workstation plus a universal iPhone/iPad iOS 26+ target. One shared domain and SQLite repository remain the foundation; no web runtime or third-party dependency was added.
 
-The local database is `Application Support/MaterialsIntelligence/knowledge.sqlite`. Current schema version is 5 (version 5 adds sync metadata): records/claims/relationships, claim lifecycle, Library/FTS, and research-session snapshots. Foreign keys are enabled on open. Version 1 and direct version 3 upgrades are regression-tested, preserve stable IDs and existing knowledge, and complete without foreign-key violations.
+- Phases 0–4: native authoring, records/claims/relationships, guarded deletion, source provenance, FTS and bookmark-referenced Library.
+- Phase 5: bounded local RAG, Reviewed/Verified evidence gate, exact citation-ID validation, Apple on-device provider and honest unavailable state.
+- Phase 6: schema-v1 research packages, persistent staging/review/identity reuse, transactional commit and audit. Imported claims remain Unverified.
+- Phase 7: bounded graph traversal, native explorer/Why paths, related navigation and generic stored-knowledge comparison (`PHASE_7_CHECKPOINT.md`).
+- Phase 8: end-to-end degradation screening with source-backed explicit rules, contradictions, assumptions, data gaps, report export and optional local explanation (`ENGINEERING_TOOLS.md`).
+- Phase 9: adaptive mobile reference/Ask/update UI and opt-in private CloudKit adapter for a separate permitted personal/public vault; conflict review and local recovery (`MOBILE_SYNC.md`).
+- Phase 10: controlled local degradation agent using existing services, limited explicit tools, structured reports, local history and research handoff through the Phase 6 boundary (`ENGINEERING_AGENT.md`).
 
-## Implemented product
+## Storage and compatibility
 
-- Native sidebar and pages for Overview, Ask, Search, Research, Library, Materials, Damage Mechanisms, Standards, Components, Sources, Claims, Relationships, and Settings.
-- Stable record, claim, relationship, and document identities with source linkage, six claim states, guarded deletion, and restart persistence.
-- Offline FTS5 over records, active claims, relationships, and document metadata; transactional rebuilds keep writes and indexes consistent.
-- Referenced local documents with persisted security-scoped bookmarks, associations, relinking, and missing-file preservation.
-- Local RAG over the existing FTS path. Only Reviewed or Verified claims enter model context; citations must resolve to retrieved claim IDs. Unverified imported claims appear as evidence gaps until reviewed.
-- Phase 6 JSON schema v1, strict validation, persisted staging, deterministic duplicate/conflict suggestions, accept/reject/edit/reuse/cancel/commit actions, atomic permanent writes, provenance, original/final package audit, result mappings, history, and native review UI.
+Original `Application Support/MaterialsIntelligence/knowledge.sqlite` stays local. `personal-public.sqlite` is a separate explicit sync vault, never an automatic copy. Schema 6 adds agent audit after schema 5 sync metadata; migrations retain existing IDs/provenance. No second search, graph or engineering database is introduced. Sync intentionally excludes files/bookmarks and agent task history. Incoming snapshot replacement needs review, including changed/deleted Verified claims.
 
-## Post-Phase-6 verification — 2026-09-27
+## Validation and limitations
 
-`Scripts/test.sh` passes KnowledgeStore, LocalRAG, and ResearchIngestion suites. Coverage includes CRUD/integrity, schema 1 and schema 3 migrations, FTS update/delete/archive behavior, document association rollback, bookmark persistence, RAG evidence gating/citation validation/context bounds, malformed and invalid packages, invalid edit preservation, duplicate/conflict matching, partial approval, dependency failures, forced late rollback including FTS, cancellation, retry, stale sessions, provenance, audit reopen, imported search retrieval, and RAG use after explicit review.
+Seven deterministic suites cover repository/migrations, RAG, ingestion, graph, degradation, sync and agent benchmarks. Mac, generic iOS Simulator and generic iOS device builds are supported. Mac process launch is testable. Actual GUI screenshots cannot be captured on this display; no mobile simulator runtime/device is installed. Real iCloud account/entitlement behavior and actual on-device model generation are UNVERIFIED. Exact manual checks are in the phase documents; do not treat build success as visual acceptance.
 
-A clean Release arm64 `xcodebuild clean build` from a fresh derived-data directory passes with Xcode 27.0 / Swift 6.4. The built executable remained alive during a five-second launch check with no application initialization failure. The audit restored working add/edit/delete controls on the specialized Materials screen and removed duplicate source rows from the Research Entities section.
-
-## Verification boundary and known limits
-
-Automated tests and process launch do not establish visual correctness or complete human interaction. Still manual: visit every screen; resize; check light/dark mode, keyboard use and VoiceOver; exercise the macOS import/export/file panels; complete import → review → edit/reuse/reject → commit/cancel → Search → Claims review → Ask; and verify a real on-device generated answer. The current Mac previously reported the Apple model as `modelNotReady`, so deterministic provider tests—not a real model response—verify RAG integration.
-
-Search remains lexical OR-prefix FTS over structured text and document metadata, not document contents or semantic embeddings. Matching is deliberately conservative and deterministic; it does not infer numeric or semantic contradictions. Research boundary labels are provenance, not row-level authorization. Audit stores original and final snapshots, not every intermediate event. Research editing assumes the app's single-store serial UI workflow; stale revisions prevent lost updates, while multi-process collaborative review is unsupported.
-
-## Phase 7
-
-Implemented and regression-tested; see `PHASE_7_CHECKPOINT.md` for graph semantics and verification. Native explorer, related-record entry points, claim Why paths, and comparisons use the unchanged repository. Release build and process launch pass; screen capture is unavailable, so interaction/visual checks remain UNVERIFIED.
-
-## Phase 8
-
-Degradation assessment operates end-to-end with stored evidence, scoped explicit rules, contradictions, gaps, assumptions, report export and optional local explanation. See `ENGINEERING_TOOLS.md`. No unsupported engineering thresholds or new persistence layer.
-
-## Phase 9
-
-Universal iPhone/iPad target and separate personal/public vault added. Shared models, repository, FTS, RAG and intelligence services remain native. Opt-in private CloudKit adapter uses snapshot compare-and-swap, incoming review, explicit conflict resolution and recovery. Original Mac vault remains local. See `MOBILE_SYNC.md` for data boundaries, signing setup and UNVERIFIED real account/device checks.
+Known functional scope limits: lexical/metadata search, narrative rather than typed material properties, conservative exact-scope rules, no semantic contradiction detection or quantitative likelihood, no field-level sync merge, no automatic external research. Snapshot sync regenerates internal claim timestamps; original research timestamps and Library added dates remain. Claims and sources retain IDs and engineering content. Original Mac authoring remains independent of iCloud.
 
 ## Exact next action
 
-Implement Phase 10 controlled local evidence-backed degradation agent over existing services. Preserve the Phase 6 ingestion gate; keep history in SQLite. Complete regression/benchmark gates and final read-only roadmap audit. No phase beyond 10 is authorized.
+Complete the genuine account/device/GUI checks in `MOBILE_SYNC.md`, `ENGINEERING_AGENT.md` and earlier checkpoints before declaring the full product operationally verified. Review final audit findings before any corrective work. No development beyond Phase 10 is authorized. If allowance requires stopping, this state and phase guides are the continuation handoff.
